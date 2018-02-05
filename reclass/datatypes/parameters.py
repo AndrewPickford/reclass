@@ -40,7 +40,7 @@ class Parameters(object):
     functionality and does not try to be a really mapping object.
     '''
 
-    def __init__(self, mapping, settings, uri):
+    def __init__(self, mapping, settings, uri, merge_initialise = True):
         self._settings = settings
         self._base = {}
         self._uri = uri
@@ -50,10 +50,13 @@ class Parameters(object):
         self._needs_all_envs = False
         self._keep_overrides = False
         if mapping is not None:
-            # we initialise by merging
-            self._keep_overrides = True
-            self.merge(mapping)
-            self._keep_overrides = False
+            if merge_initialise:
+                # we initialise by merging
+                self._keep_overrides = True
+                self.merge(mapping)
+                self._keep_overrides = False
+            else:
+                self._base = mapping
 
     #delimiter = property(lambda self: self._delimiter)
 
