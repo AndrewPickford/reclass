@@ -9,15 +9,17 @@
 from reclass.output import OutputterBase
 import yaml
 
+_SafeDumper = yaml.CSafeDumper if yaml.__with_libyaml__ else yaml.SafeDumper
+
 class Outputter(OutputterBase):
 
     def dump(self, data, pretty_print=False, no_refs=False):
         if (no_refs):
             return yaml.dump(data, default_flow_style=not pretty_print, Dumper=ExplicitDumper)
         else:
-            return yaml.dump(data, default_flow_style=not pretty_print)
+            return yaml.dump(data, default_flow_style=not pretty_print, Dumper=_SafeDumper)
 
-class ExplicitDumper(yaml.SafeDumper):
+class ExplicitDumper(_SafeDumper):
     """
     A dumper that will never emit aliases.
     """
