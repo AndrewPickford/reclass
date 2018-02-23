@@ -11,6 +11,8 @@ import yaml
 import os
 from reclass.errors import NotFoundError
 
+_SafeLoader = yaml.CSafeLoader if yaml.__with_libyaml__ else yaml.SafeLoader
+
 class YamlData(object):
 
     @classmethod
@@ -23,7 +25,7 @@ class YamlData(object):
             raise NotFoundError('Cannot open: %s' % abs_path)
         y = cls('yaml_fs://{0}'.format(abs_path))
         fp = file(abs_path)
-        data = yaml.safe_load(fp)
+        data = yaml.load(fp, Loader=_SafeLoader)
         if data is not None:
             y._data = data
         fp.close()
@@ -33,7 +35,7 @@ class YamlData(object):
     def from_string(cls, string, uri):
         ''' Initialise yaml data from a string '''
         y = cls(uri)
-        data = yaml.safe_load(string)
+        data = yaml.load(string, Loader=_SafeLoader)
         if data is not None:
             y._data = data
         return y
