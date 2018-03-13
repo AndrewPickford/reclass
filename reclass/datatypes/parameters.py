@@ -56,7 +56,7 @@ class Parameters(object):
                 self.merge(mapping)
                 self._keep_overrides = False
             else:
-                self._base = mapping
+                self._base = copy.deepcopy(mapping)
 
     #delimiter = property(lambda self: self._delimiter)
 
