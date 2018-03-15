@@ -5,6 +5,9 @@
 #
 
 import copy
+import sys
+
+from reclass.errors import ResolveError
 
 class ValueList(object):
 
@@ -87,12 +90,22 @@ class ValueList(object):
 
         output = None
         deepCopied = False
+        last_error = None
         for n, value in enumerate(self._values):
+            try:
+                new = value.render(context, inventory)
+            except ResolveError as e:
+                if self._settings.ignore_overwritten_missing_references and not isinstance(output, (dict, list)) and n != (len(self._values)-1):
+                    new = None
+                    last_error = e
+                    print >>sys.stderr, "[WARNING] Reference '%s' undefined" % (str(value))
+                else:
+                    raise e
+
             if output is None:
-                output = self._values[n].render(context, inventory)
+                output = new
                 deepCopied = False
             else:
-                new = value.render(context, inventory)
                 if isinstance(output, dict) and isinstance(new, dict):
                     p1 = Parameters(output, self._settings, None, merge_initialise = False)
                     p2 = Parameters(new, self._settings, None, merge_initialise = False)
@@ -109,6 +122,10 @@ class ValueList(object):
                     raise TypeError('Cannot merge %s over %s' % (repr(self._values[n]), repr(self._values[n-1])))
                 else:
                     output = new
+
+        if isinstance(output, (dict, list)) and last_error is not None:
+            raise last_error
+
         return output
 
     def __repr__(self):

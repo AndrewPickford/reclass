@@ -49,3 +49,6 @@ class CompItem(Item):
 
     def __repr__(self):
         return 'CompItem(%r)' % self._items
+
+    def __str__(self):
+        return ''.join([ str(i) for i in self._items ])

@@ -7,6 +7,8 @@
 # Released under the terms of the Artistic Licence 2.0
 #
 
+import copy
+
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
 from reclass.errors import InfiniteRecursionError, InterpolationError
@@ -18,6 +20,17 @@ except ImportError:
 
 SIMPLE = {'one': 1, 'two': 2, 'three': 3}
 SETTINGS = Settings()
+
+class MockDevice(object):
+    def __init__(self):
+        self._text = ''
+
+    def write(self, s):
+        self._text += s
+        return
+
+    def text(self):
+        return self._text
 
 class TestParameters(unittest.TestCase):
 
@@ -499,6 +512,51 @@ class TestParametersNoMock(unittest.TestCase):
         with self.assertRaises(InterpolationError) as error:
             p1.interpolate()
         self.assertEqual(error.exception.message, "-> \n   Bad references, at gamma\n      ${beta}")
+
+    def test_ignore_overwriten_missing_reference(self):
+        settings = copy.deepcopy(SETTINGS)
+        settings.ignore_overwritten_missing_references = True
+        p1 = Parameters({'alpha': '${beta}'}, settings, '')
+        p2 = Parameters({'alpha': '${gamma}'}, settings, '')
+        p3 = Parameters({'gamma': 3}, settings, '')
+        r1 = {'alpha': 3, 'gamma': 3}
+        p1.merge(p2)
+        p1.merge(p3)
+        err1 = "[WARNING] Reference '${beta}' undefined\n"
+        with mock.patch('sys.stderr', new=MockDevice()) as std_err:
+            p1.interpolate()
+        self.assertEqual(p1.as_dict(), r1)
+        self.assertEqual(std_err.text(), err1)
+
+    def test_ignore_overwriten_missing_reference_last_value(self):
+        # an error should be raised if the last reference to be merged
+        # is missing even if ignore_overwritten_missing_references is true
+        settings = copy.deepcopy(SETTINGS)
+        settings.ignore_overwritten_missing_references = True
+        p1 = Parameters({'alpha': '${gamma}'}, settings, '')
+        p2 = Parameters({'alpha': '${beta}'}, settings, '')
+        p3 = Parameters({'gamma': 3}, settings, '')
+        p1.merge(p2)
+        p1.merge(p3)
+        with self.assertRaises(InterpolationError) as error:
+            p1.interpolate()
+        self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${beta}, at alpha")
+
+    def test_ignore_overwriten_missing_reference_dict(self):
+        # setting ignore_overwritten_missing_references to true should
+        # not change the behaviour for dicts
+        settings = copy.deepcopy(SETTINGS)
+        settings.ignore_overwritten_missing_references = True
+        p1 = Parameters({'alpha': '${beta}'}, settings, '')
+        p2 = Parameters({'alpha': '${gamma}'}, settings, '')
+        p3 = Parameters({'gamma': {'one': 1, 'two': 2}}, settings, '')
+        err1 = "[WARNING] Reference '${beta}' undefined\n"
+        p1.merge(p2)
+        p1.merge(p3)
+        with self.assertRaises(InterpolationError) as error, mock.patch('sys.stderr', new=MockDevice()) as std_err:
+            p1.interpolate()
+        self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${beta}, at alpha")
+        self.assertEqual(std_err.text(), err1)
 
 if __name__ == '__main__':
     unittest.main()

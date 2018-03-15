@@ -83,3 +83,6 @@ class Value(object):
 
     def __repr__(self):
         return 'Value(%r)' % self._item
+
+    def __str__(self):
+        return str(self._item)
