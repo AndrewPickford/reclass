@@ -160,6 +160,23 @@ Default value is True to keep backward compatible behavior.
   ignore_overwritten_missing_reference: True
 
 
+Print summary of missed references
+----------------------------------
+
+Instead of failing on the first undefinded reference error all missing reference errors are printed at once.
+
+.. code-block:: yaml
+  reclass --nodeinfo mynode
+  -> dontpanic
+     Cannot resolve ${_param:kkk}, at mkkek3:tree:to:fail, in yaml_fs:///test/classes/third.yml
+     Cannot resolve ${_param:kkk}, at mkkek3:tree:another:xxxx, in yaml_fs:///test/classes/third.yml
+     Cannot resolve ${_param:kkk}, at mykey2:tree:to:fail, in yaml_fs:///test/classes/third.yml
+
+.. code-block:: yaml
+
+  group_errors: True
+
+
 Inventory Queries
 -----------------
 

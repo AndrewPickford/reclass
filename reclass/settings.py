@@ -25,8 +25,9 @@ class Settings(object):
             self.ignore_class_notfound_regexp = [ self.ignore_class_notfound_regexp ]
 
         self.ignore_class_notfound_warning = options.get('ignore_class_notfound_warning', OPT_IGNORE_CLASS_NOTFOUND_WARNING)
-
         self.ignore_overwritten_missing_references = options.get('ignore_overwritten_missing_references', OPT_IGNORE_OVERWRITTEN_MISSING_REFERENCES)
+
+        self.group_errors = options.get('group_errors', OPT_GROUP_ERRORS)
 
         self.ref_parser = reclass.values.parser_funcs.get_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
         self.simple_ref_parser = reclass.values.parser_funcs.get_simple_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)

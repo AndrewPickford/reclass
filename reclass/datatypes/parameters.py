@@ -14,7 +14,7 @@ from collections import namedtuple
 from reclass.utils.dictpath import DictPath
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
-from reclass.errors import InfiniteRecursionError, ResolveError, InterpolationError, ParseError, BadReferencesError
+from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, ParseError, BadReferencesError
 
 class Parameters(object):
     '''
@@ -47,6 +47,7 @@ class Parameters(object):
         self._unrendered = None
         self._escapes_handled = {}
         self._inv_queries = []
+        self._resolve_errors = ResolveErrorList()
         self._needs_all_envs = False
         self._keep_overrides = False
         if mapping is not None:
@@ -82,6 +83,9 @@ class Parameters(object):
 
     def needs_all_envs(self):
         return self._needs_all_envs
+
+    def resolve_errors(self):
+        return self._resolve_errors
 
     def as_dict(self):
         return self._base.copy()
@@ -248,6 +252,8 @@ class Parameters(object):
             # processing them, so we cannot just iterate the dict
             path, v = self._unrendered.iteritems().next()
             self._interpolate_inner(path, inventory)
+        if self._resolve_errors.have_errors():
+            raise self._resolve_errors
 
     def initialise_interpolation(self):
         self._unrendered = None
@@ -258,6 +264,7 @@ class Parameters(object):
             self._unrendered = {}
             self._inv_queries = []
             self._needs_all_envs = False
+            self._resolve_errors = ResolveErrorList()
             self._render_simple_dict(self._base, DictPath(self._settings.delimiter))
 
     def _interpolate_inner(self, path, inventory):
@@ -279,7 +286,11 @@ class Parameters(object):
             new = value.render(self._base, inventory)
         except ResolveError as e:
             e.context = path
-            raise
+            if self._settings.group_errors:
+                self._resolve_errors.add(e)
+                new = None
+            else:
+                raise
 
         if isinstance(new, dict):
             self._render_simple_dict(new, path)

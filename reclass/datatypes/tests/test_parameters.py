@@ -11,7 +11,7 @@ import copy
 
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
-from reclass.errors import InfiniteRecursionError, InterpolationError
+from reclass.errors import InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList
 import unittest
 try:
     import unittest.mock as mock
@@ -512,6 +512,20 @@ class TestParametersNoMock(unittest.TestCase):
         with self.assertRaises(InterpolationError) as error:
             p1.interpolate()
         self.assertEqual(error.exception.message, "-> \n   Bad references, at gamma\n      ${beta}")
+
+    def test_multiple_resolve_errors(self):
+        p1 = Parameters({'alpha': '${gamma}', 'beta': '${gamma}'}, SETTINGS, '')
+        with self.assertRaises(ResolveErrorList) as error:
+            p1.interpolate()
+        self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${gamma}, at alpha\n   Cannot resolve ${gamma}, at beta")
+
+    def test_force_single_resolve_error(self):
+        settings = copy.deepcopy(SETTINGS)
+        settings.group_errors = False
+        p1 = Parameters({'alpha': '${gamma}', 'beta': '${gamma}'}, settings, '')
+        with self.assertRaises(ResolveError) as error:
+            p1.interpolate()
+        self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${gamma}, at alpha")
 
     def test_ignore_overwriten_missing_reference(self):
         settings = copy.deepcopy(SETTINGS)

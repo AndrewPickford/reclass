@@ -50,6 +50,11 @@ def make_output_options_group(parser, defaults={}):
     ret.add_option('-r', '--no-refs', dest='no_refs', action="store_true",
                    default=defaults.get('no_refs', OPT_NO_REFS),
                    help='output all key values do not use yaml references [%default]')
+    ret.add_option('-1', '--single-error', dest='group_errors', action="store_false",
+                   default=defaults.get('group_errors', OPT_GROUP_ERRORS),
+                   help='throw errors immediately instead of grouping them together')
+    ret.add_option('-0', '--multiple-errors', dest='group_errors', action="store_true",
+                   help='were possible report any errors encountered as a group')
     return ret
 
 

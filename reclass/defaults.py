@@ -15,6 +15,7 @@ OPT_INVENTORY_BASE_URI = os.path.join('/etc', RECLASS_NAME)
 OPT_NODES_URI = 'nodes'
 OPT_CLASSES_URI = 'classes'
 OPT_PRETTY_PRINT = True
+OPT_GROUP_ERRORS = True
 OPT_NO_REFS = False
 OPT_OUTPUT = 'yaml'
 
