@@ -7,6 +7,7 @@ import collections
 import distutils.version
 import fnmatch
 import os
+import time
 
 # Squelch warning on centos7 due to upgrading cffi
 # see https://github.com/saltstack/salt/pull/39871
@@ -114,7 +115,21 @@ class GitRepo(object):
             fetch_kwargs['callbacks'] = self.remotecallbacks
         if self.credentials is not None:
             origin.credentials = self.credentials
-        fetch_results = origin.fetch(**fetch_kwargs)
+
+        #FIXME: the git connection sometimes fails to initialise,
+        #       work around this by retrying a few times before
+        #       failing and raising an exception
+        c = 0
+        while True:
+            try:
+                fetch_results = origin.fetch(**fetch_kwargs)
+                break
+            except Exception as e:
+                if c >= 2:
+                    raise e
+                else:
+                    c += 1
+                    time.sleep(0.2)
 
         remote_branches = self.repo.listall_branches(pygit2.GIT_BRANCH_REMOTE)
         local_branches = self.repo.listall_branches()
