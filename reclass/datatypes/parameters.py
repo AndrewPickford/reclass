@@ -181,7 +181,7 @@ class Parameters(object):
         else:
             return self._update_value(cur, new)
 
-    def merge(self, other):
+    def merge(self, other, wrap=True):
         """Merge function (public edition).
 
         Call _merge_recurse on self with either another Parameter object or a
@@ -197,9 +197,15 @@ class Parameters(object):
 
         self._unrendered = None
         if isinstance(other, dict):
-            wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
+            if wrap:
+                wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
+            else:
+                wrapped = copy.deepcopy(other)
         elif isinstance(other, self.__class__):
-            wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
+            if wrap:
+                wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
+            else:
+                wrapped = copy.deepcopy(other._base)
         else:
             raise TypeError('Cannot merge %s objects into %s' % (type(other),
                             self.__class__.__name__))

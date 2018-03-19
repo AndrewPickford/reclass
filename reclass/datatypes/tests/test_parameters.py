@@ -572,5 +572,23 @@ class TestParametersNoMock(unittest.TestCase):
         self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${beta}, at alpha")
         self.assertEqual(std_err.text(), err1)
 
+    def test_escaped_string_in_ref_dict_1(self):
+        # test with escaped string in first dict to be merged
+        p1 = Parameters({'a': { 'one': '${a_ref}' }, 'b': { 'two': '\${not_a_ref}' }, 'c': '${b}', 'a_ref': 123}, SETTINGS, '')
+        p2 = Parameters({'c': '${a}'}, SETTINGS, '')
+        r = { 'a': { 'one': 123 }, 'b': { 'two': '${not_a_ref}' }, 'c': { 'one': 123, 'two': '${not_a_ref}' }, 'a_ref': 123}
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_escaped_string_in_ref_dict_2(self):
+        # test with escaped string in second dict to be merged
+        p1 = Parameters({'a': { 'one': '${a_ref}' }, 'b': { 'two': '\${not_a_ref}' }, 'c': '${a}', 'a_ref': 123}, SETTINGS, '')
+        p2 = Parameters({'c': '${b}'}, SETTINGS, '')
+        r = { 'a': { 'one': 123 }, 'b': { 'two': '${not_a_ref}' }, 'c': { 'one': 123, 'two': '${not_a_ref}' }, 'a_ref': 123}
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
 if __name__ == '__main__':
     unittest.main()
