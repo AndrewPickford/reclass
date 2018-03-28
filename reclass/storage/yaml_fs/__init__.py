@@ -13,7 +13,7 @@ from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.storage import NodeStorageBase
 from reclass.storage.common import NameMangler
 from reclass.storage.yamldata import YamlData
-from directory import Directory
+from .directory import Directory
 from reclass.datatypes import Entity
 import reclass.errors
 

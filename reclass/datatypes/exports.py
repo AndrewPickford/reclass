@@ -6,7 +6,7 @@
 
 import copy
 
-from parameters import Parameters
+from .parameters import Parameters
 from reclass.errors import ResolveError
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
