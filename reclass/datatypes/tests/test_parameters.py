@@ -195,6 +195,40 @@ class TestParametersNoMock(unittest.TestCase):
         p1.initialise_interpolation()
         self.assertEqual(p1.as_dict()['key'], l[2])
 
+    def test_merge_none_over_list(self):
+        l = ['foo', 1, 2]
+        settings = Settings({'allow_none_override': True})
+        p1 = Parameters(dict(key=l[:2]), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        p1.merge(p2)
+        p1.initialise_interpolation()
+        self.assertEqual(p1.as_dict()['key'], None)
+
+    def test_merge_none_over_dict(self):
+        settings = Settings({'allow_none_override': True})
+        p1 = Parameters(dict(key=SIMPLE), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        p1.merge(p2)
+        p1.initialise_interpolation()
+        self.assertEqual(p1.as_dict()['key'], None)
+
+    # def test_merge_bare_dict_over_dict(self):
+        # settings = Settings({'allow_bare_override': True})
+        # p1 = Parameters(dict(key=SIMPLE), settings, '')
+        # p2 = Parameters(dict(key=dict()), settings, '')
+        # p1.merge(p2)
+        # p1.initialise_interpolation()
+        # self.assertEqual(p1.as_dict()['key'], {})
+
+    # def test_merge_bare_list_over_list(self):
+        # l = ['foo', 1, 2]
+        # settings = Settings({'allow_bare_override': True})
+        # p1 = Parameters(dict(key=l), settings, '')
+        # p2 = Parameters(dict(key=list()), settings, '')
+        # p1.merge(p2)
+        # p1.initialise_interpolation()
+        # self.assertEqual(p1.as_dict()['key'], [])
+
     def test_merge_dicts(self):
         mergee = {'five':5,'four':4,'None':None,'tuple':(1,2,3)}
         p = Parameters(dict(dict=SIMPLE), SETTINGS, '')

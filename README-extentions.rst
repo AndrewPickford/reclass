@@ -92,6 +92,37 @@ parameter three (class test2) and finally merges the parameter three definition 
 the final value.
 
 
+Allow override list and dicts by empty entity,None instead of merge
+-------------------------------------------------------------------
+
+With settings:
+
+.. code-block:: yaml
+
+  allow_none_override: True       # default True
+
+  # note dict,list over None is allowed and not configurable
+
+Referenced lists or dicts can now be overriden by None or empty type of dict, list:
+
+.. code-block:: yaml
+
+  # nodes/test.yml
+  parameters:
+    one:
+      a: 1
+      b: 2
+    two: {}
+    three: None
+
+  # classes/test1.yml
+  parameters:
+    one: ${two}
+
+  # classes/test2.yml
+  parameters:
+    three: ${one}
+
 
 Nested References
 -----------------

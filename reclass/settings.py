@@ -14,6 +14,7 @@ class Settings(object):
         self.allow_scalar_over_list = options.get('allow_scalar_over_list', OPT_ALLOW_SCALAR_OVER_LIST)
         self.allow_list_over_scalar = options.get('allow_list_over_scalar', OPT_ALLOW_LIST_OVER_SCALAR)
         self.allow_dict_over_scalar = options.get('allow_dict_over_scalar', OPT_ALLOW_DICT_OVER_SCALAR)
+        self.allow_none_override = options.get('allow_none_override', OPT_ALLOW_NONE_OVERRIDE)
         self.automatic_parameters = options.get('automatic_parameters', AUTOMATIC_RECLASS_PARAMETERS)
         self.default_environment = options.get('default_environment', DEFAULT_ENVIRONMENT)
         self.delimiter = options.get('delimiter', PARAMETER_INTERPOLATION_DELIMITER)
@@ -43,6 +44,7 @@ class Settings(object):
                and self.allow_scalar_over_list == other.allow_scalar_over_list \
                and self.allow_list_over_scalar == other.allow_list_over_scalar \
                and self.allow_dict_over_scalar == other.allow_dict_over_scalar \
+               and self.allow_none_override == other.allow_none_override \
                and self.automatic_parameters == other.automatic_parameters \
                and self.default_environment == other.default_environment \
                and self.delimiter == other.delimiter \
