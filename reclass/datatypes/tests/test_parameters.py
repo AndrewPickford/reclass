@@ -204,6 +204,15 @@ class TestParametersNoMock(unittest.TestCase):
         p1.initialise_interpolation()
         self.assertEqual(p1.as_dict()['key'], None)
 
+    def test_merge_none_over_list_negative(self):
+        l = ['foo', 1, 2]
+        settings = Settings({'allow_none_override': False})
+        p1 = Parameters(dict(key=l[:2]), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        with self.assertRaises(TypeError):
+            p1.merge(p2)
+            p1.initialise_interpolation()
+
     def test_merge_none_over_dict(self):
         settings = Settings({'allow_none_override': True})
         p1 = Parameters(dict(key=SIMPLE), settings, '')
@@ -211,6 +220,14 @@ class TestParametersNoMock(unittest.TestCase):
         p1.merge(p2)
         p1.initialise_interpolation()
         self.assertEqual(p1.as_dict()['key'], None)
+
+    def test_merge_none_over_dict_negative(self):
+        settings = Settings({'allow_none_override': False})
+        p1 = Parameters(dict(key=SIMPLE), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        with self.assertRaises(TypeError):
+            p1.merge(p2)
+            p1.initialise_interpolation()
 
     # def test_merge_bare_dict_over_dict(self):
         # settings = Settings({'allow_bare_override': True})
