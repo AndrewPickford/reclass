@@ -24,11 +24,10 @@ class YamlData(object):
         if not os.access(abs_path, os.R_OK):
             raise NotFoundError('Cannot open: %s' % abs_path)
         y = cls('yaml_fs://{0}'.format(abs_path))
-        fp = file(abs_path)
-        data = yaml.load(fp, Loader=_SafeLoader)
-        if data is not None:
-            y._data = data
-        fp.close()
+        with open(abs_path) as fp:
+            data = yaml.load(fp, Loader=_SafeLoader)
+            if data is not None:
+                y._data = data
         return y
 
     @classmethod

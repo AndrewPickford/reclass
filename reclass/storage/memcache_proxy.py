@@ -35,7 +35,7 @@ class MemcacheProxy(NodeStorageBase):
             return self._real_storage.get_node(name, settings)
         try:
             return self._nodes_cache[name]
-        except KeyError, e:
+        except KeyError as e:
             ret = self._real_storage.get_node(name, settings)
             self._nodes_cache[name] = ret
         return ret
@@ -45,7 +45,7 @@ class MemcacheProxy(NodeStorageBase):
             return self._real_storage.get_class(name, environment, settings)
         try:
             return self._classes_cache[environment][name]
-        except KeyError, e:
+        except KeyError as e:
             if environment not in self._classes_cache:
                 self._classes_cache[environment] = dict()
             ret = self._real_storage.get_class(name, environment, settings)

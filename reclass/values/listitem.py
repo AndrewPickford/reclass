@@ -4,7 +4,7 @@
 # This file is part of reclass
 #
 
-from item import Item
+from .item import Item
 from reclass.settings import Settings
 
 class ListItem(Item):

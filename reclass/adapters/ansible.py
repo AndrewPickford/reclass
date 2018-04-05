@@ -16,6 +16,8 @@
 
 import os, sys, posix, optparse
 
+from six import iteritems
+
 from reclass import get_storage, output
 from reclass.core import Core
 from reclass.errors import ReclassException
@@ -81,7 +83,7 @@ def cli():
             apps = data['applications']
             if options.applications_postfix:
                 postfix = options.applications_postfix
-                groups.update([(k + postfix, v) for k,v in apps.iteritems()])
+                groups.update([(k + postfix, v) for (k, v) in iteritems(apps)])
             else:
                 groups.update(apps)
 

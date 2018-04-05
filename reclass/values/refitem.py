@@ -4,7 +4,7 @@
 # This file is part of reclass
 #
 
-from item import Item
+from .item import Item
 from reclass.defaults import REFERENCE_SENTINELS
 from reclass.settings import Settings
 from reclass.utils.dictpath import DictPath

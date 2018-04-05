@@ -2,6 +2,11 @@ import copy
 import reclass.values.parser_funcs
 from reclass.defaults import *
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 class Settings(object):
 
     def __init__(self, options={}):

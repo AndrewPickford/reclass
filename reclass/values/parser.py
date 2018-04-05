@@ -6,10 +6,10 @@
 
 import pyparsing as pp
 
-from compitem import CompItem
-from invitem import InvItem
-from refitem import RefItem
-from scaitem import ScaItem
+from .compitem import CompItem
+from .invitem import InvItem
+from .refitem import RefItem
+from .scaitem import ScaItem
 
 from reclass.errors import ParseError
 from reclass.values.parser_funcs import STR, REF, INV

@@ -11,6 +11,7 @@ from reclass.output import OutputLoader
 from reclass.storage.loader import StorageBackendLoader
 from reclass.storage.memcache_proxy import MemcacheProxy
 
+
 def get_storage(storage_type, nodes_uri, classes_uri, **kwargs):
     storage_class = StorageBackendLoader(storage_type).load()
     return MemcacheProxy(storage_class(nodes_uri, classes_uri, **kwargs))

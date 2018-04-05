@@ -6,6 +6,8 @@
 import collections
 import copy
 
+from six import iteritems
+
 import reclass.errors
 from reclass import get_storage
 from reclass.storage import NodeStorageBase
@@ -32,7 +34,7 @@ class ExternalNodeStorage(NodeStorageBase):
         self._classes_storage = dict()
         if 'env_overrides' in classes_uri:
             for override in classes_uri['env_overrides']:
-                for env, options in override.iteritems():
+                for (env, options) in iteritems(override):
                         uri = copy.deepcopy(classes_uri)
                         uri.update(options)
                         uri = self._uri(uri)

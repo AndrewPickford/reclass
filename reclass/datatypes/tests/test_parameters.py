@@ -9,6 +9,8 @@
 
 import copy
 
+from six import iteritems
+
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
 from reclass.errors import InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList
@@ -132,7 +134,7 @@ class TestParameters(unittest.TestCase):
         p2, b2 = self._construct_mocked_params(mergee)
         p1.merge(p2)
         p1.initialise_interpolation()
-        for key, value in mergee.iteritems():
+        for (key, value) in iteritems(mergee):
             # check that each key, value in mergee resulted in a get call and
             # a __setitem__ call against b1 (the merge target)
             self.assertIn(mock.call(key), b1.get.call_args_list)

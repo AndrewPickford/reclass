@@ -7,7 +7,9 @@
 import copy
 import pyparsing as pp
 
-from item import Item
+from six import iteritems
+
+from .item import Item
 from reclass.settings import Settings
 from reclass.utils.dictpath import DictPath
 from reclass.errors import ExpressionError, ParseError, ResolveError
@@ -301,7 +303,7 @@ class InvItem(Item):
 
     def _value_expression(self, inventory):
         results = {}
-        for node, items in inventory.iteritems():
+        for (node, items) in iteritems(inventory):
             if self._value_path.exists_in(items):
                 results[node] = copy.deepcopy(self._resolve(self._value_path, items))
         return results
@@ -311,14 +313,14 @@ class InvItem(Item):
             ExpressionError('Failed to render %s' % str(self), tbFlag=False)
 
         results = {}
-        for node, items in inventory.iteritems():
+        for (node, items) in iteritems(inventory):
             if self._question.value(context, items) and self._value_path.exists_in(items):
                 results[node] = copy.deepcopy(self._resolve(self._value_path, items))
         return results
 
     def _list_test_expression(self, context, inventory):
         results = []
-        for node, items in inventory.iteritems():
+        for (node, items) in iteritems(inventory):
             if self._question.value(context, items):
                 results.append(node)
         return results

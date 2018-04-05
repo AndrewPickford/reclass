@@ -93,7 +93,7 @@ class ExternalNodeStorage(NodeStorageBase):
             relpath = self._nodes[name]
             path = os.path.join(self.nodes_uri, relpath)
             name = os.path.splitext(relpath)[0]
-        except KeyError, e:
+        except KeyError as e:
             raise reclass.errors.NodeNotFound(self.name, name, self.nodes_uri)
         entity = YamlData.from_file(path).get_entity(name, settings)
         return entity
@@ -102,7 +102,7 @@ class ExternalNodeStorage(NodeStorageBase):
         vvv('GET CLASS {0}'.format(name))
         try:
             path = os.path.join(self.classes_uri, self._classes[name])
-        except KeyError, e:
+        except KeyError as e:
             raise reclass.errors.ClassNotFound(self.name, name, self.classes_uri)
         entity = YamlData.from_file(path).get_entity(name, settings)
         return entity

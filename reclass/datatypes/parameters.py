@@ -10,11 +10,15 @@
 import copy
 import sys
 import types
+
+from six import iteritems, next
+
 from collections import namedtuple
 from reclass.utils.dictpath import DictPath
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
 from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, ParseError, BadReferencesError
+
 
 class Parameters(object):
     '''
@@ -108,7 +112,7 @@ class Parameters(object):
         return [ self._wrap_value(v, path.new_subpath(k)) for (k, v) in enumerate(source) ]
 
     def _wrap_dict(self, source, path):
-        return { k: self._wrap_value(v, path.new_subpath(k)) for k, v in source.iteritems() }
+        return { k: self._wrap_value(v, path.new_subpath(k)) for (k, v) in iteritems(source) }
 
     def _update_value(self, cur, new):
         if isinstance(cur, Value):
@@ -147,7 +151,7 @@ class Parameters(object):
         """
 
         ret = cur
-        for key, newvalue in new.iteritems():
+        for (key, newvalue) in iteritems(new):
             if key.startswith(self._settings.dict_key_override_prefix) and not self._keep_overrides:
                 if not isinstance(newvalue, Value):
                     newvalue = Value(newvalue, self._settings, self._uri)
@@ -245,7 +249,7 @@ class Parameters(object):
                     container[key] = value.render(None, None)
 
     def _render_simple_dict(self, dictionary, path):
-        for key, value in dictionary.iteritems():
+        for (key, value) in iteritems(dictionary):
             self._render_simple_container(dictionary, key, value, path)
 
     def _render_simple_list(self, item_list, path):
@@ -258,7 +262,7 @@ class Parameters(object):
             # we could use a view here, but this is simple enough:
             # _interpolate_inner removes references from the refs hash after
             # processing them, so we cannot just iterate the dict
-            path, v = self._unrendered.iteritems().next()
+            path, v = next(iteritems(self._unrendered))
             self._interpolate_inner(path, inventory)
         if self._resolve_errors.have_errors():
             raise self._resolve_errors

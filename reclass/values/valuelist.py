@@ -4,6 +4,8 @@
 # This file is part of reclass
 #
 
+from __future__ import print_function
+
 import copy
 import sys
 
@@ -98,7 +100,7 @@ class ValueList(object):
                 if self._settings.ignore_overwritten_missing_references and not isinstance(output, (dict, list)) and n != (len(self._values)-1):
                     new = None
                     last_error = e
-                    print >>sys.stderr, "[WARNING] Reference '%s' undefined" % (str(value))
+                    print("[WARNING] Reference '%s' undefined" % str(value), file=sys.stderr)
                 else:
                     raise e
 

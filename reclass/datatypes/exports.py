@@ -6,6 +6,8 @@
 
 import copy
 
+from six import iteritems, next
+
 from .parameters import Parameters
 from reclass.errors import ResolveError
 from reclass.values.value import Value
@@ -25,12 +27,12 @@ class Exports(Parameters):
         self._unrendered.pop(key, None)
 
     def overwrite(self, other):
-        overdict = {'~' + key: value for key, value in other.iteritems()}
+        overdict = {'~' + key: value for (key, value) in iteritems(other)}
         self.merge(overdict)
 
     def interpolate_from_external(self, external):
         while len(self._unrendered) > 0:
-            path, v = self._unrendered.iteritems().next()
+            path, v = next(iteritems(self._unrendered))
             value = path.get_value(self._base)
             if isinstance(value, (Value, ValueList)):
                 external._interpolate_references(path, value, None)
@@ -51,7 +53,7 @@ class Exports(Parameters):
         required = self._get_required_paths(mainpath)
         while len(required) > 0:
             while len(required) > 0:
-                path, v = required.iteritems().next()
+                path, v = next(iteritems(required))
                 value = path.get_value(self._base)
                 if isinstance(value, (Value, ValueList)):
                     try:

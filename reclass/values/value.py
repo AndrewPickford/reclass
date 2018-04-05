@@ -4,10 +4,10 @@
 # This file is part of reclass
 #
 
-from parser import Parser
-from dictitem import DictItem
-from listitem import ListItem
-from scaitem import ScaItem
+from .parser import Parser
+from .dictitem import DictItem
+from .listitem import ListItem
+from .scaitem import ScaItem
 from reclass.errors import InterpolationError
 
 class Value(object):

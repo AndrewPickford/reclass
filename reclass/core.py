@@ -15,10 +15,18 @@ import shlex
 import string
 import sys
 import yaml
+
+from six import iteritems
+
 from reclass.settings import Settings
 from reclass.output.yaml_outputter import ExplicitDumper
 from reclass.datatypes import Entity, Classes, Parameters, Exports
 from reclass.errors import MappingFormatError, ClassNotFound, InvQueryClassNotFound, InvQueryError, InterpolationError
+
+try:
+    basestring
+except NameError:
+    basestring = str
 
 class Core(object):
 
@@ -54,7 +62,7 @@ class Core(object):
             regexp = True
         try:
             key = lexer.get_token()
-        except ValueError, e:
+        except ValueError as e:
             raise MappingFormatError('Error in mapping "{0}": missing closing '
                                      'quote (or slash)'.format(instr))
         if regexp:
@@ -128,7 +136,7 @@ class Core(object):
 
     def _get_automatic_parameters(self, nodename, environment):
         if self._settings.automatic_parameters:
-            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': string.split(nodename, '.')[0] },
+            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': str.split(nodename, '.')[0] },
                                                'environment': environment } }, self._settings, '__auto__')
         else:
             return Parameters({}, self._settings, '')
@@ -220,7 +228,7 @@ class Core(object):
         nodes = {}
         applications = {}
         classes = {}
-        for f, nodeinfo in entities.iteritems():
+        for (f, nodeinfo) in iteritems(entities):
             d = nodes[f] = self._nodeinfo_as_dict(f, nodeinfo)
             for a in d['applications']:
                 if a in applications:

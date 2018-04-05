@@ -16,6 +16,8 @@ with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     import pygit2
 
+from six import iteritems
+
 import reclass.errors
 from reclass.storage import NodeStorageBase
 from reclass.storage.common import NameMangler
@@ -195,7 +197,7 @@ class GitRepo(object):
 
     def nodes(self, branch, subdir):
         ret = {}
-        for name, file in self.files[branch].iteritems():
+        for (name, file) in iteritems(self.files[branch]):
             if subdir is None or name.startswith(subdir):
                 node_name = os.path.splitext(file.name)[0]
                 if node_name in ret:
@@ -224,7 +226,7 @@ class ExternalNodeStorage(NodeStorageBase):
             self._classes_uri = []
             if 'env_overrides' in classes_uri:
                 for override in classes_uri['env_overrides']:
-                    for env, options in override.iteritems():
+                    for (env, options) in iteritems(override):
                         uri = GitURI(self._classes_default_uri)
                         uri.update({ 'branch': env })
                         uri.update(options)

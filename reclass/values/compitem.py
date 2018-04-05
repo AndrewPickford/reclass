@@ -5,7 +5,7 @@
 #
 
 from reclass.settings import Settings
-from item import Item
+from .item import Item
 
 class CompItem(Item):
 
