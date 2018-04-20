@@ -102,7 +102,7 @@ class ValueList(object):
                 else:
                     raise e
 
-            if output is None:
+            if output is None or value.overwrite:
                 output = new
                 deepCopied = False
             else:
@@ -122,6 +122,7 @@ class ValueList(object):
                     raise TypeError('Cannot merge %s over %s' % (repr(self._values[n]), repr(self._values[n-1])))
                 else:
                     output = new
+                    deepCopied = False
 
         if isinstance(output, (dict, list)) and last_error is not None:
             raise last_error

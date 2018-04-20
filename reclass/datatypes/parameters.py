@@ -149,6 +149,9 @@ class Parameters(object):
         ret = cur
         for key, newvalue in new.iteritems():
             if key.startswith(self._settings.dict_key_override_prefix) and not self._keep_overrides:
+                if not isinstance(newvalue, Value):
+                    newvalue = Value(newvalue, self._settings, self._uri)
+                newvalue.overwrite = True
                 ret[key.lstrip(self._settings.dict_key_override_prefix)] = newvalue
             else:
                 ret[key] = self._merge_recurse(ret.get(key), newvalue, path.new_subpath(key))
@@ -172,7 +175,6 @@ class Parameters(object):
             dict: a merged dictionary
 
         """
-
 
         if cur is None:
             return new

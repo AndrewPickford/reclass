@@ -590,5 +590,18 @@ class TestParametersNoMock(unittest.TestCase):
         p1.interpolate()
         self.assertEqual(p1.as_dict(), r)
 
+    def test_complex_overwrites_1(self):
+        # find a better name for this test
+        p1 = Parameters({ 'test': { 'dict': { 'a': '${values:one}', 'b': '${values:two}' } },
+                          'values': { 'one': 1, 'two': 2, 'three': { 'x': 'X', 'y': 'Y' } } }, SETTINGS, '')
+        p2 = Parameters({ 'test': { 'dict': { 'c': '${values:two}' } } }, SETTINGS, '')
+        p3 = Parameters({ 'test': { 'dict': { '~b': '${values:three}' } } }, SETTINGS, '')
+        r = {'test': {'dict': {'a': 1, 'b': {'x': 'X', 'y': 'Y'}, 'c': 2}}, 'values': {'one': 1, 'three': {'x': 'X', 'y': 'Y'}, 'two': 2} }
+        p2.merge(p3)
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+
 if __name__ == '__main__':
     unittest.main()
