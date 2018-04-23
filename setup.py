@@ -37,7 +37,7 @@ setup(
     license = LICENCE,
     url = URL,
     packages = find_packages(exclude=['*tests']), #FIXME validate this
-    entry_point = { 'console_scripts': console_scripts },
+    entry_points = { 'console_scripts': console_scripts },
     install_requires = ['pyparsing', 'pyyaml', 'six'], #FIXME pygit2 (require libffi-dev, libgit2-dev 0.26.x )
 
     classifiers=[
