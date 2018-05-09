@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+
+[packages]
+pyparsing = "*"
+PyYAML = "*"
+six = "*"
+pyyaml = "*"
+# FIXME, issues with compile phase
+#"pygit2" = "*"
+
+[requires]
+python_version = "2.7"
