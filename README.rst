@@ -24,3 +24,26 @@ Documentation
 
 Documentation covering the original version is in the doc directory.
 See the README-extensions.rst file for documentation on the extentions.
+
+
+
+Reclass related projects/tools
+==============================
+
+Queries:
+
+* yg, yaml grep with 'jq' syntax - https://gist.github.com/epcim/f1c5b748fa7c942de50677aef04f29f8, (https://asciinema.org/a/84173)
+* reclass-graph - https://github.com/tomkukral/reclass-graph
+  
+Introspection, manupulation:
+
+* reclass-tools, for manipulating reclass models - https://github.com/dis-xcom/reclass_tools
+
+YAML merge tools:
+
+* spruce, general purpose YAML & JSON merging tool - https://github.com/geofffranks/spruce
+
+Other:
+
+* saltclass, new pillar/master_tops module for salt with the behaviour of reclass - https://github.com/saltstack/salt/pull/42349
+
