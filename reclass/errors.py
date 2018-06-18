@@ -6,6 +6,10 @@
 # Copyright © 2007–14 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import posix, sys
 import traceback
@@ -39,14 +43,12 @@ class ReclassException(Exception):
     def exit_with_message(self, out=sys.stderr):
         if self._full_traceback:
             t, v, tb = sys.exc_info()
-            print >>out, 'Full Traceback:'
+            print('Full Traceback', file=out)
             for l in traceback.format_tb(tb):
-                print >>out, l,
-            print >>out
+                print(l, file=out)
         if self._traceback:
-            print >>out, self._traceback
-        print >>out, self.message
-        print >>out
+            print(self._traceback, file=out)
+        print(self.message, file=out)
         sys.exit(self.rc)
 
 

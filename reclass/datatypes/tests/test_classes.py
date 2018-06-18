@@ -6,9 +6,15 @@
 # Copyright © 2007–14 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from reclass.datatypes import Classes
 from reclass.datatypes.classes import INVALID_CHARACTERS_FOR_CLASSNAMES
 import unittest
+
 try:
     import unittest.mock as mock
 except ImportError:

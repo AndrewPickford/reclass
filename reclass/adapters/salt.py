@@ -6,6 +6,10 @@
 # Copyright © 2007–14 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import os, sys, posix
 
@@ -122,9 +126,9 @@ def cli():
                        class_mappings=class_mappings,
                        **defaults)
 
-        print output(data, options.output, options.pretty_print, options.no_refs)
+        print(output(data, options.output, options.pretty_print, options.no_refs))
 
-    except ReclassException, e:
+    except ReclassException as e:
         e.exit_with_message(sys.stderr)
 
     sys.exit(posix.EX_OK)

@@ -3,12 +3,18 @@
 #
 # This file is part of reclass
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 from .parser import Parser
 from .dictitem import DictItem
 from .listitem import ListItem
 from .scaitem import ScaItem
 from reclass.errors import InterpolationError
+
+from six import string_types
 
 class Value(object):
 
@@ -18,7 +24,7 @@ class Value(object):
         self._settings = settings
         self._uri = uri
         self._overwrite = False
-        if isinstance(value, str):
+        if isinstance(value, string_types):
             if parse_string:
                 try:
                     self._item = self._parser.parse(value, self._settings)

@@ -14,6 +14,11 @@
 # The ansible adapter has received little testing and may not work at all now.
 
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import os, sys, posix, optparse
 
 from six import iteritems
@@ -89,9 +94,9 @@ def cli():
 
             data = groups
 
-        print output(data, options.output, options.pretty_print, options.no_refs)
+        print(output(data, options.output, options.pretty_print, options.no_refs))
 
-    except ReclassException, e:
+    except ReclassException as e:
         e.exit_with_message(sys.stderr)
 
     sys.exit(posix.EX_OK)

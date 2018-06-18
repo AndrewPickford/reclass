@@ -6,6 +6,11 @@
 # Copyright © 2007–14 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import os, sys
 import fnmatch
 import yaml
@@ -21,7 +26,7 @@ FILE_EXTENSION = '.yml'
 STORAGE_NAME = 'yaml_fs'
 
 def vvv(msg):
-    #print >>sys.stderr, msg
+    #print(msg, file=sys.stderr)
     pass
 
 def path_mangler(inventory_base_uri, nodes_uri, classes_uri):

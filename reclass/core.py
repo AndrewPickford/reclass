@@ -6,6 +6,10 @@
 # Copyright © 2007–14 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import copy
 import time
@@ -24,10 +28,6 @@ from reclass.datatypes import Entity, Classes, Parameters, Exports
 from reclass.errors import MappingFormatError, ClassNameResolveError, ClassNotFound, InvQueryClassNameResolveError, InvQueryClassNotFound, InvQueryError, InterpolationError, ResolveError
 from reclass.values.parser import Parser
 
-try:
-    basestring
-except NameError:
-    basestring = str
 
 class Core(object):
 
@@ -130,7 +130,7 @@ class Core(object):
                         if self._cnf_r.match(klass):
                             if self._settings.ignore_class_notfound_warning:
                                 # TODO, add logging handler
-                                print >>sys.stderr, "[WARNING] Reclass class not found: '%s'. Skipped!" % klass
+                                print("[WARNING] Reclass class not found: '%s'. Skipped!" % klass, file=sys.stderr)
                             continue
                     e.nodename = nodename
                     e.uri = entity.uri
@@ -151,7 +151,7 @@ class Core(object):
 
     def _get_automatic_parameters(self, nodename, environment):
         if self._settings.automatic_parameters:
-            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': str.split(nodename, '.')[0] },
+            return Parameters({ '_reclass_': { 'name': { 'full': nodename, 'short': nodename.split('.')[0] },
                                                'environment': environment } }, self._settings, '__auto__')
         else:
             return Parameters({}, self._settings, '')

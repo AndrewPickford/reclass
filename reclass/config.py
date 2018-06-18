@@ -6,13 +6,17 @@
 # Copyright © 2007–14 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import yaml, os, optparse, posix, sys
 
-import errors
-from defaults import *
-from constants import MODE_NODEINFO, MODE_INVENTORY
-from reclass import get_path_mangler
+from . import errors, get_path_mangler
+from .defaults import *
+from .constants import MODE_NODEINFO, MODE_INVENTORY
+
 
 def make_db_options_group(parser, defaults={}):
     ret = optparse.OptionGroup(parser, 'Database options',
@@ -171,7 +175,7 @@ def get_options(name, version, description,
 
 
 def vvv(msg):
-    #print >>sys.stderr, msg
+    #print(msg, file=sys.stderr)
     pass
 
 
@@ -180,8 +184,8 @@ def find_and_read_configfile(filename=CONFIG_FILE_NAME,
     for d in dirs:
         f = os.path.join(d, filename)
         if os.access(f, os.R_OK):
-            vvv('Using config file: {0}'.format(f))
-            return yaml.safe_load(file(f))
+            vvv('Using config file: {0}'.format(str(f)))
+            return yaml.safe_load(open(f))
         elif os.path.isfile(f):
             raise PermissionsError('cannot read %s' % f)
     return {}

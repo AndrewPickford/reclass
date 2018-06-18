@@ -3,11 +3,15 @@
 #
 # This file is part of reclass
 #
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import copy
 import pyparsing as pp
 
-from six import iteritems
+from six import iteritems, string_types
 
 from .item import Item
 from reclass.settings import Settings
@@ -90,7 +94,7 @@ class Element(object):
             raise ResolveError(str(path))
 
     def _get_vars(self, var, export, parameter, value):
-        if isinstance(var, str):
+        if isinstance(var, string_types):
             path = DictPath(self._delimiter, var)
             if path.path[0].lower() == 'exports':
                 export = path

@@ -1,11 +1,15 @@
+# -*- coding: utf-8
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import copy
 import reclass.values.parser_funcs
 from reclass.defaults import *
 
-try:
-    basestring
-except NameError:
-    basestring = str
+from six import string_types
 
 class Settings(object):
 
@@ -27,7 +31,7 @@ class Settings(object):
         self.ignore_class_notfound = options.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND)
 
         self.ignore_class_notfound_regexp = options.get('ignore_class_notfound_regexp', OPT_IGNORE_CLASS_NOTFOUND_REGEXP)
-        if isinstance(self.ignore_class_notfound_regexp, basestring):
+        if isinstance(self.ignore_class_notfound_regexp, string_types):
             self.ignore_class_notfound_regexp = [ self.ignore_class_notfound_regexp ]
 
         self.ignore_class_notfound_warning = options.get('ignore_class_notfound_warning', OPT_IGNORE_CLASS_NOTFOUND_WARNING)
