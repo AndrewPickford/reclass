@@ -35,6 +35,9 @@ class ValueList(object):
         self.assembleRefs()
         self._check_for_inv_query()
 
+    def uri(self):
+        return '; '.join([ x.uri() for x in self._values ])
+
     def has_references(self):
         return len(self._refs) > 0
 
