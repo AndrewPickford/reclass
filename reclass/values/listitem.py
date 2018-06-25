@@ -31,15 +31,7 @@ class ListItem(Item):
         if item.type == Item.LIST:
             item._list.extend(self._list)
             return item
-        elif item.type == Item.SCALAR:
-            if item.contents() is None:
-                return self
-            elif self._settings.allow_list_over_scalar:
-                self._list.insert(0, item.contents())
-                return self
-            else:
-                raise TypeError('allow list over scalar = False: cannot merge %s onto %s' % (repr(self), repr(item)))
-        raise TypeError('Cannot merge %s over %s' % (repr(self), repr(item)))
+        raise RuntimeError('Trying to merge %s over %s' % (repr(self), repr(item)))
 
     def __repr__(self):
         return 'ListItem(%r)' % (self._list)

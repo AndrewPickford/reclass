@@ -19,6 +19,10 @@ class Item(object):
     REFERENCE = 5
     SCALAR = 6
 
+    TYPE_STR = { COMPOSITE: 'composite', DICTIONARY: 'dictionary',
+                 INV_QUERY: 'invventory query', LIST: 'list',
+                 REFERENCE: 'reference', SCALAR: 'scalar' }
+
     def allRefs(self):
         return True
 
@@ -45,3 +49,6 @@ class Item(object):
     def render(self, context, exports):
         msg = "Item class {0} does not implement render()"
         raise NotImplementedError(msg.format(self.__class__.__name__))
+
+    def type_str(self):
+        return self.TYPE_STR[self.type]

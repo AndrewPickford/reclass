@@ -208,6 +208,7 @@ class ResolveError(InterpolationError):
         msg = 'Cannot resolve {0}'.format(self.reference.join(REFERENCE_SENTINELS)) + self._add_context_and_uri()
         return [ msg ]
 
+
 class ResolveErrorList(InterpolationError):
     def __init__(self):
         super(ResolveErrorList, self).__init__(msg=None)
@@ -277,6 +278,18 @@ class BadReferencesError(InterpolationError):
     def _get_error_message(self):
         msg = [ 'Bad references' + self._add_context_and_uri(),
                 '   ' + ', '.join(self.refs) ]
+        return msg
+
+
+class TypeMergeError(InterpolationError):
+
+    def __init__(self, value1, value2, uri):
+        super(TypeMergeError, self).__init__(msg=None, uri=uri, tbFlag=False)
+        self.type1 = value1.item_type_str()
+        self.type2 = value2.item_type_str()
+
+    def _get_error_message(self):
+        msg = [ 'Canot merge {0} over {1}'.format(self.type1, self.type2) + self._add_context_and_uri() ]
         return msg
 
 

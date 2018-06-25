@@ -27,7 +27,34 @@ from collections import namedtuple
 from reclass.utils.dictpath import DictPath
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
-from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, ParseError, BadReferencesError
+from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, BadReferencesError
+
+class ParameterDict(dict):
+    def __init__(self, *args, **kwargs):
+        self._uri = kwargs.pop('uri', None)
+        dict.__init__(self, *args, **kwargs)
+
+    @property
+    def uri(self):
+        return self._uri
+
+    @uri.setter
+    def uri(self, uri):
+        self._uri = uri
+
+
+class ParameterList(list):
+    def __init__(self, *args, **kwargs):
+        self._uri = kwargs.pop('uri', None)
+        list.__init__(self, *args, **kwargs)
+
+    @property
+    def uri(self):
+        return self._uri
+
+    @uri.setter
+    def uri(self, uri):
+        self._uri = uri
 
 
 class Parameters(object):
@@ -117,10 +144,10 @@ class Parameters(object):
                 raise
 
     def _wrap_list(self, source, path):
-        return [ self._wrap_value(v, path.new_subpath(k)) for (k, v) in enumerate(source) ]
+        return ParameterList([ self._wrap_value(v, path.new_subpath(k)) for (k, v) in enumerate(source) ], uri=self._uri)
 
     def _wrap_dict(self, source, path):
-        return { k: self._wrap_value(v, path.new_subpath(k)) for (k, v) in iteritems(source) }
+        return ParameterDict({ k: self._wrap_value(v, path.new_subpath(k)) for (k, v) in iteritems(source) }, uri=self._uri)
 
     def _update_value(self, cur, new):
         if isinstance(cur, Value):
@@ -128,14 +155,20 @@ class Parameters(object):
         elif isinstance(cur, ValueList):
             values = cur
         else:
-            values = ValueList(Value(cur, self._settings, self._uri), self._settings)
+            uri = self._uri
+            if isinstance(cur, (ParameterDict, ParameterList)):
+                uri = cur.uri
+            values = ValueList(Value(cur, self._settings, uri), self._settings)
 
         if isinstance(new, Value):
             values.append(new)
         elif isinstance(new, ValueList):
             values.extend(new)
         else:
-            values.append(Value(new, self._settings, self._uri, parse_string=self._parse_strings))
+            uri = self._uri
+            if isinstance(new, (ParameterDict, ParameterList)):
+                uri = new.uri
+            values.append(Value(new, self._settings, uri, parse_string=self._parse_strings))
 
         return values
 
@@ -167,6 +200,7 @@ class Parameters(object):
                 ret[key.lstrip(self._settings.dict_key_override_prefix)] = newvalue
             else:
                 ret[key] = self._merge_recurse(ret.get(key), newvalue, path.new_subpath(key))
+
         return ret
 
     def _merge_recurse(self, cur, new, path=None):
@@ -213,7 +247,7 @@ class Parameters(object):
         if isinstance(other, dict):
             wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
         elif isinstance(other, self.__class__):
-            wrapped = self._wrap_dict(other._base, DictPath(self._settings.delimiter))
+            wrapped = other._wrap_dict(other._base, DictPath(self._settings.delimiter))
         else:
             raise TypeError('Cannot merge %s objects into %s' % (type(other),
                             self.__class__.__name__))
@@ -224,6 +258,7 @@ class Parameters(object):
                 if value.is_complex():
                     p = path.new_subpath(key)
                     self._unrendered[p] = True
+                    container[key] = value
                     if value.has_inv_query():
                         self._inv_queries.append((p, value))
                         if value.needs_all_envs():
@@ -234,29 +269,34 @@ class Parameters(object):
             if isinstance(value, Value) and value.is_container():
                 value = value.contents()
             if isinstance(value, dict):
-                self._render_simple_dict(value, path.new_subpath(key))
-                container[key] = value
+                container[key] = self._render_simple_dict(value, path.new_subpath(key))
             elif isinstance(value, list):
-                self._render_simple_list(value, path.new_subpath(key))
-                container[key] = value
+                container[key] = self._render_simple_list(value, path.new_subpath(key))
             elif isinstance(value, Value):
                 if value.is_complex():
                     p = path.new_subpath(key)
                     self._unrendered[p] = True
+                    container[key] = value
                     if value.has_inv_query():
                         self._inv_queries.append((p, value))
                         if value.needs_all_envs():
                             self._needs_all_envs = True
                 else:
                     container[key] = value.render(None, None)
+            else:
+                container[key] = value
 
     def _render_simple_dict(self, dictionary, path):
+        new_dict = {}
         for (key, value) in iteritems(dictionary):
-            self._render_simple_container(dictionary, key, value, path)
+            self._render_simple_container(new_dict, key, value, path)
+        return new_dict
 
     def _render_simple_list(self, item_list, path):
+        new_list = [ None ] * len(item_list)
         for n, value in enumerate(item_list):
-            self._render_simple_container(item_list, n, value, path)
+            self._render_simple_container(new_list, n, value, path)
+        return new_list
 
     def interpolate(self, inventory=None):
         self._initialise_interpolate()
@@ -279,7 +319,7 @@ class Parameters(object):
             self._inv_queries = []
             self._needs_all_envs = False
             self._resolve_errors = ResolveErrorList()
-            self._render_simple_dict(self._base, DictPath(self._settings.delimiter))
+            self._base = self._render_simple_dict(self._base, DictPath(self._settings.delimiter))
 
     def _interpolate_inner(self, path, inventory):
         value = path.get_value(self._base)
@@ -305,11 +345,14 @@ class Parameters(object):
                 new = None
             else:
                 raise
+        except InterpolationError as e:
+            e.context = path
+            raise
 
         if isinstance(new, dict):
-            self._render_simple_dict(new, path)
+            new = self._render_simple_dict(new, path)
         elif isinstance(new, list):
-            self._render_simple_list(new, path)
+            new = self._render_simple_list(new, path)
         return new
 
     def _interpolate_references(self, path, value, inventory):
@@ -325,7 +368,7 @@ class Parameters(object):
                         # Therefore, if we encounter False instead of True,
                         # it means that we have already processed it and are now
                         # faced with a cyclical reference.
-                        raise InfiniteRecursionError(path, ref, value.uri())
+                        raise InfiniteRecursionError(path, ref, value.uri)
                     else:
                         self._interpolate_inner(path_from_ref, inventory)
                 else:
@@ -345,4 +388,4 @@ class Parameters(object):
                 old = len(value.get_references())
                 value.assembleRefs(self._base)
                 if old == len(value.get_references()):
-                    raise BadReferencesError(value.get_references(), str(path), value.uri())
+                    raise BadReferencesError(value.get_references(), str(path), value.uri)

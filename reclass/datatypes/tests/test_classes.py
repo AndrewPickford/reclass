@@ -78,8 +78,9 @@ class TestClasses(unittest.TestCase):
     def test_append_invalid_characters(self):
         c = Classes()
         invalid_name = ' '.join(('foo', 'bar'))
-        with self.assertRaises(InvalidClassnameError):
+        with self.assertRaises(InvalidClassnameError) as e:
             c.append_if_new(invalid_name)
+        self.assertEqual(e.exception.message, "Invalid character ' ' in class name 'foo bar'.")
 
     def test_merge_unique(self):
         c = Classes(TESTLIST1)

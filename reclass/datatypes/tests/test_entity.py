@@ -253,10 +253,11 @@ class TestEntityNoMock(unittest.TestCase):
         node1_entity.initialise_interpolation()
         node2_entity.initialise_interpolation()
         queries = node1_entity.parameters.get_inv_queries()
-        with self.assertRaises(ResolveError):
+        with self.assertRaises(ResolveError) as e:
             for p, q in queries:
                 node1_entity.interpolate_single_export(q)
                 node2_entity.interpolate_single_export(q)
+        self.assertEqual(e.exception.message, "-> \n   Cannot resolve ${b}, at a")
 
     def test_exports_failed_render_ignore(self):
         node1_exports = Exports({'a': '${a}'}, SETTINGS, '')

@@ -188,7 +188,7 @@ class Core(object):
                             node.interpolate_single_export(q)
                         except InterpolationError as e:
                             e.nodename = nodename
-                            raise InvQueryError(q.contents(), e, context=p, uri=q.uri())
+                            raise InvQueryError(q.contents(), e, context=p, uri=q.uri)
                 inventory[nodename] = node.exports.as_dict()
         return inventory
 

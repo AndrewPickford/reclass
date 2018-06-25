@@ -17,7 +17,9 @@ from six import iteritems
 
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
-from reclass.errors import InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList
+from reclass.values.value import Value
+from reclass.values.scaitem import ScaItem
+from reclass.errors import InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
 import unittest
 
 try:
@@ -120,13 +122,15 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(b1.__eq__.call_count, 0)
 
     def test_construct_wrong_type(self):
-        with self.assertRaises(TypeError):
-            self._construct_mocked_params('wrong type')
+        with self.assertRaises(TypeError) as e:
+            self._construct_mocked_params(str('wrong type'))
+        self.assertEqual(e.exception.message, "Cannot merge <type 'str'> objects into Parameters")
 
     def test_merge_wrong_type(self):
         p, b = self._construct_mocked_params()
-        with self.assertRaises(TypeError):
-            p.merge('wrong type')
+        with self.assertRaises(TypeError) as e:
+            p.merge(str('wrong type'))
+        self.assertEqual(e.exception.message, "Cannot merge <type 'str'> objects into Parameters")
 
     def test_get_dict(self):
         p, b = self._construct_mocked_params(SIMPLE)
@@ -138,12 +142,8 @@ class TestParameters(unittest.TestCase):
         mergee = {'five':5,'four':4,'None':None,'tuple':(1,2,3)}
         p2, b2 = self._construct_mocked_params(mergee)
         p1.merge(p2)
-        p1.initialise_interpolation()
-        for (key, value) in iteritems(mergee):
-            # check that each key, value in mergee resulted in a get call and
-            # a __setitem__ call against b1 (the merge target)
-            self.assertIn(mock.call(key), b1.get.call_args_list)
-            self.assertIn(mock.call(key, value), b1.__setitem__.call_args_list)
+        self.assertEqual(b1.get.call_count, 4)
+        self.assertEqual(b1.__setitem__.call_count, 4)
 
     def test_stray_occurrence_overwrites_during_interpolation(self):
         p1 = Parameters({'r' : mock.sentinel.ref, 'b': '${r}'}, SETTINGS, '')
@@ -183,56 +183,111 @@ class TestParametersNoMock(unittest.TestCase):
         self.assertListEqual(p1.as_dict()['list'], l1+l2)
 
     def test_merge_list_into_scalar(self):
+        l = ['foo', 1, 2]
+        p1 = Parameters(dict(key=l[0]), SETTINGS, '')
+        p2 = Parameters(dict(key=l[1:]), SETTINGS, '')
+        with self.assertRaises(TypeMergeError) as e:
+            p1.merge(p2)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge list over scalar, at key, in ; ")
+
+    def test_merge_list_into_scalar_allow(self):
         settings = Settings({'allow_list_over_scalar': True})
         l = ['foo', 1, 2]
         p1 = Parameters(dict(key=l[0]), settings, '')
         p2 = Parameters(dict(key=l[1:]), settings, '')
         p1.merge(p2)
-        p1.initialise_interpolation()
+        p1.interpolate()
         self.assertListEqual(p1.as_dict()['key'], l)
 
     def test_merge_scalar_over_list(self):
+        l = ['foo', 1, 2]
+        p1 = Parameters(dict(key=l[:2]), SETTINGS, '')
+        p2 = Parameters(dict(key=l[2]), SETTINGS, '')
+        with self.assertRaises(TypeMergeError) as e:
+            p1.merge(p2)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge scalar over list, at key, in ; ")
+
+    def test_merge_scalar_over_list_allow(self):
         l = ['foo', 1, 2]
         settings = Settings({'allow_scalar_over_list': True})
         p1 = Parameters(dict(key=l[:2]), settings, '')
         p2 = Parameters(dict(key=l[2]), settings, '')
         p1.merge(p2)
-        p1.initialise_interpolation()
+        p1.interpolate()
         self.assertEqual(p1.as_dict()['key'], l[2])
 
     def test_merge_none_over_list(self):
         l = ['foo', 1, 2]
+        settings = Settings({'allow_none_override': False})
+        p1 = Parameters(dict(key=l[:2]), settings, '')
+        p2 = Parameters(dict(key=None), settings, '')
+        with self.assertRaises(TypeMergeError) as e:
+            p1.merge(p2)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge scalar over list, at key, in ; ")
+
+    def test_merge_none_over_list_allow(self):
+        l = ['foo', 1, 2]
         settings = Settings({'allow_none_override': True})
         p1 = Parameters(dict(key=l[:2]), settings, '')
         p2 = Parameters(dict(key=None), settings, '')
         p1.merge(p2)
-        p1.initialise_interpolation()
+        p1.interpolate()
         self.assertEqual(p1.as_dict()['key'], None)
 
-    def test_merge_none_over_list_negative(self):
-        l = ['foo', 1, 2]
-        settings = Settings({'allow_none_override': False})
-        p1 = Parameters(dict(key=l[:2]), settings, '')
-        p2 = Parameters(dict(key=None), settings, '')
-        with self.assertRaises(TypeError):
+    def test_merge_dict_over_scalar(self):
+        d = { 'one': 1, 'two': 2 }
+        p1 = Parameters({ 'a': 1 }, SETTINGS, '')
+        p2 = Parameters({ 'a': d }, SETTINGS, '')
+        with self.assertRaises(TypeMergeError) as e:
             p1.merge(p2)
-            p1.initialise_interpolation()
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge dictionary over scalar, at a, in ; ")
+
+    def test_merge_dict_over_scalar_allow(self):
+        settings = Settings({'allow_dict_over_scalar': True})
+        d = { 'one': 1, 'two': 2 }
+        p1 = Parameters({ 'a': 1 }, settings, '')
+        p2 = Parameters({ 'a': d }, settings, '')
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), { 'a': d })
+
+    def test_merge_scalar_over_dict(self):
+        d = { 'one': 1, 'two': 2}
+        p1 = Parameters({ 'a': d }, SETTINGS, '')
+        p2 = Parameters({ 'a': 1 }, SETTINGS, '')
+        with self.assertRaises(TypeMergeError) as e:
+            p1.merge(p2)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge scalar over dictionary, at a, in ; ")
+
+    def test_merge_scalar_over_dict_allow(self):
+        d = { 'one': 1, 'two': 2}
+        settings = Settings({'allow_scalar_over_dict': True})
+        p1 = Parameters({ 'a': d }, settings, '')
+        p2 = Parameters({ 'a': 1 }, settings, '')
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), { 'a': 1})
 
     def test_merge_none_over_dict(self):
+        p1 = Parameters(dict(key=SIMPLE), SETTINGS, '')
+        p2 = Parameters(dict(key=None), SETTINGS, '')
+        with self.assertRaises(TypeMergeError) as e:
+            p1.merge(p2)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge scalar over dictionary, at key, in ; ")
+
+    def test_merge_none_over_dict_allow(self):
         settings = Settings({'allow_none_override': True})
         p1 = Parameters(dict(key=SIMPLE), settings, '')
         p2 = Parameters(dict(key=None), settings, '')
         p1.merge(p2)
-        p1.initialise_interpolation()
+        p1.interpolate()
         self.assertEqual(p1.as_dict()['key'], None)
-
-    def test_merge_none_over_dict_negative(self):
-        settings = Settings({'allow_none_override': False})
-        p1 = Parameters(dict(key=SIMPLE), settings, '')
-        p2 = Parameters(dict(key=None), settings, '')
-        with self.assertRaises(TypeError):
-            p1.merge(p2)
-            p1.initialise_interpolation()
 
     # def test_merge_bare_dict_over_dict(self):
         # settings = Settings({'allow_bare_override': True})
@@ -285,22 +340,6 @@ class TestParametersNoMock(unittest.TestCase):
         p.initialise_interpolation()
         self.assertDictEqual(p.as_dict(), dict(dict=goal))
 
-    def test_merge_dict_into_scalar(self):
-        p = Parameters(dict(base='foo'), SETTINGS, '')
-        p2 = Parameters(dict(base=SIMPLE), SETTINGS, '')
-        with self.assertRaises(TypeError):
-            p.merge(p2)
-            p.interpolate()
-
-    def test_merge_scalar_over_dict(self):
-        settings = Settings({'allow_scalar_over_dict': True})
-        p = Parameters(dict(base=SIMPLE), settings, '')
-        mergee = {'base':'foo'}
-        p2 = Parameters(mergee, settings, '')
-        p.merge(p2)
-        p.initialise_interpolation()
-        self.assertDictEqual(p.as_dict(), mergee)
-
     def test_interpolate_single(self):
         v = 42
         d = {'foo': 'bar'.join(SETTINGS.reference_sentinels),
@@ -340,8 +379,9 @@ class TestParametersNoMock(unittest.TestCase):
         d = {'foo': 'bar'.join(SETTINGS.reference_sentinels),
              'bar': 'foo'.join(SETTINGS.reference_sentinels)}
         p = Parameters(d, SETTINGS, '')
-        with self.assertRaises(InfiniteRecursionError):
+        with self.assertRaises(InfiniteRecursionError) as e:
             p.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Infinite recursion: ${foo}, at bar")
 
     def test_nested_references(self):
         d = {'a': '${${z}}', 'b': 2, 'z': 'b'}
@@ -419,6 +459,22 @@ class TestParametersNoMock(unittest.TestCase):
         p1 = Parameters({'A': None, 'B': None, 'C': None, 'D': None, 'E': None, 'F': None}, SETTINGS, '')
         p2 = Parameters({'A': 'abc', 'B': [1, 2, 3], 'C': {'a': 'aaa', 'b': 'bbb'}, 'D': '${A}', 'E': '${B}', 'F': '${C}'}, SETTINGS, '')
         r = {'A': 'abc', 'B': [1, 2, 3], 'C': {'a': 'aaa', 'b': 'bbb'}, 'D': 'abc', 'E': [1, 2, 3], 'F': {'a': 'aaa', 'b': 'bbb'}}
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_overwrite_dict(self):
+        p1 = Parameters({'a': { 'one': 1, 'two': 2 }}, SETTINGS, '')
+        p2 = Parameters({'~a': { 'three': 3, 'four': 4 }}, SETTINGS, '')
+        r = {'a': { 'three': 3, 'four': 4 }}
+        p1.merge(p2)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_overwrite_list(self):
+        p1 = Parameters({'a': [1, 2]}, SETTINGS, '')
+        p2 = Parameters({'~a': [3, 4]}, SETTINGS, '')
+        r = {'a': [3, 4]}
         p1.merge(p2)
         p1.interpolate()
         self.assertEqual(p1.as_dict(), r)

@@ -83,6 +83,7 @@ class Entity(object):
         self._exports.merge(other._exports)
         self._name = other.name
         self._uri = other.uri
+        self._parameters._uri = other.uri
         if other.environment != None:
             self._environment = other.environment
 
