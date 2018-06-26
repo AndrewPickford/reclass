@@ -23,12 +23,15 @@ class Settings(object):
         self.default_environment = options.get('default_environment', DEFAULT_ENVIRONMENT)
         self.delimiter = options.get('delimiter', PARAMETER_INTERPOLATION_DELIMITER)
         self.dict_key_override_prefix = options.get('dict_key_override_prefix', PARAMETER_DICT_KEY_OVERRIDE_PREFIX)
+        self.dict_key_fixed_prefix = options.get('dict_key_fixed_prefix', PARAMETER_DICT_KEY_FIXED_PREFIX)
+        self.dict_key_prefixes = [ str(self.dict_key_override_prefix), str(self.dict_key_fixed_prefix) ]
         self.escape_character = options.get('escape_character', ESCAPE_CHARACTER)
         self.export_sentinels = options.get('export_sentinels', EXPORT_SENTINELS)
         self.inventory_ignore_failed_node = options.get('inventory_ignore_failed_node', OPT_INVENTORY_IGNORE_FAILED_NODE)
         self.inventory_ignore_failed_render = options.get('inventory_ignore_failed_render', OPT_INVENTORY_IGNORE_FAILED_RENDER)
         self.reference_sentinels = options.get('reference_sentinels', REFERENCE_SENTINELS)
         self.ignore_class_notfound = options.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND)
+        self.ignore_merging_onto_fixed = options.get('ignore_merging_onto_fixed', OPT_IGNORE_MERGING_ONTO_FIXED)
 
         self.ignore_class_notfound_regexp = options.get('ignore_class_notfound_regexp', OPT_IGNORE_CLASS_NOTFOUND_REGEXP)
         if isinstance(self.ignore_class_notfound_regexp, string_types):
@@ -53,6 +56,7 @@ class Settings(object):
                and self.default_environment == other.default_environment \
                and self.delimiter == other.delimiter \
                and self.dict_key_override_prefix == other.dict_key_override_prefix \
+               and self.dict_key_fixed_prefix == other.dict_key_fixed_prefix \
                and self.escape_character == other.escape_character \
                and self.export_sentinels == other.export_sentinels \
                and self.inventory_ignore_failed_node == other.inventory_ignore_failed_node \
@@ -60,7 +64,8 @@ class Settings(object):
                and self.reference_sentinels == other.reference_sentinels \
                and self.ignore_class_notfound == other.ignore_class_notfound \
                and self.ignore_class_notfound_regexp == other.ignore_class_notfound_regexp \
-               and self.ignore_class_notfound_warning == other.ignore_class_notfound_warning
+               and self.ignore_class_notfound_warning == other.ignore_class_notfound_warning \
+               and self.ignore_merging_onto_fixed == other.ignore_merging_onto_fixed
 
     def __copy__(self):
         cls = self.__class__

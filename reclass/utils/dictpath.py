@@ -148,6 +148,9 @@ class DictPath(object):
     def add_subpath(self, key):
         self._parts.append(key)
 
+    def add_ancestor(self, key):
+        self._parts.insert(0, key)
+
     def is_ancestor_of(self, other):
         if len(other._parts) <= len(self._parts):
             return False

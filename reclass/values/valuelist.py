@@ -13,7 +13,9 @@ from __future__ import print_function
 import copy
 import sys
 
-from reclass.errors import ResolveError, TypeMergeError
+from reclass.errors import ChangedFixedError, ResolveError, TypeMergeError
+
+
 
 class ValueList(object):
 
@@ -46,7 +48,7 @@ class ValueList(object):
         self._is_complex = False
         item_type = self._values[0].item_type()
         for v in self._values:
-            if v.is_complex() or v.overwrite or v.item_type() != item_type:
+            if v.is_complex() or v.fixed or v.overwrite or v.item_type() != item_type:
                 self._is_complex = True
 
     def has_references(self):
@@ -107,6 +109,7 @@ class ValueList(object):
         output = None
         deepCopied = False
         last_error = None
+        fixed = False
         for n, value in enumerate(self._values):
             try:
                 new = value.render(context, inventory)
@@ -119,6 +122,12 @@ class ValueList(object):
                     print("[WARNING] Reference '%s' undefined" % str(value), file=sys.stderr)
                 else:
                     raise e
+
+            if fixed:
+                if self._settings.ignore_merging_onto_fixed:
+                    continue
+                else:
+                    raise ChangedFixedError('{0}; {1}'.format(self._values[n-1].uri, self._values[n].uri))
 
             if output is None or value.overwrite:
                 output = new
@@ -169,6 +178,9 @@ class ValueList(object):
                     else:
                         output = new
                         deepCopied = False
+
+            if value.fixed:
+                fixed = True
 
         if isinstance(output, (dict, list)) and last_error is not None:
             raise last_error

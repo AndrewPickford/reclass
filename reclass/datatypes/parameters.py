@@ -90,15 +90,10 @@ class Parameters(object):
         self._inv_queries = []
         self._resolve_errors = ResolveErrorList()
         self._needs_all_envs = False
-        self._keep_overrides = False
         self._parse_strings = parse_strings
         if mapping is not None:
-            # we initialise by merging
-            self._keep_overrides = True
+            # initialise by merging
             self.merge(mapping)
-            self._keep_overrides = False
-
-    #delimiter = property(lambda self: self._delimiter)
 
     def __len__(self):
         return len(self._base)
@@ -129,25 +124,39 @@ class Parameters(object):
     def as_dict(self):
         return self._base.copy()
 
-    def _wrap_value(self, value, path):
-        if isinstance(value, dict):
-            return self._wrap_dict(value, path)
-        elif isinstance(value, list):
-            return self._wrap_list(value, path)
-        elif isinstance(value, (Value, ValueList)):
+    def _wrap_value(self, value):
+        if isinstance(value, (Value, ValueList)):
             return value
+        elif isinstance(value, dict):
+            return self._wrap_dict(value)
+        elif isinstance(value, list):
+            return self._wrap_list(value)
         else:
             try:
                 return Value(value, self._settings, self._uri, parse_string=self._parse_strings)
             except InterpolationError as e:
-                e.context = str(path)
+                e.context = DictPath(self._settings.delimiter)
                 raise
 
-    def _wrap_list(self, source, path):
-        return ParameterList([ self._wrap_value(v, path.new_subpath(k)) for (k, v) in enumerate(source) ], uri=self._uri)
+    def _wrap_list(self, source):
+        l = ParameterList(uri=self._uri)
+        for (k, v) in enumerate(source):
+            try:
+                l.append(self._wrap_value(v))
+            except InterpolationError as e:
+                e.context.add_ancestor(str(k))
+                raise
+        return l
 
-    def _wrap_dict(self, source, path):
-        return ParameterDict({ k: self._wrap_value(v, path.new_subpath(k)) for (k, v) in iteritems(source) }, uri=self._uri)
+    def _wrap_dict(self, source):
+        d = ParameterDict(uri=self._uri)
+        for (k, v) in iteritems(source):
+            try:
+                d[k] = self._wrap_value(v)
+            except InterpolationError as e:
+                e.context.add_ancestor(str(k))
+                raise
+        return d
 
     def _update_value(self, cur, new):
         if isinstance(cur, Value):
@@ -155,9 +164,10 @@ class Parameters(object):
         elif isinstance(cur, ValueList):
             values = cur
         else:
-            uri = self._uri
             if isinstance(cur, (ParameterDict, ParameterList)):
                 uri = cur.uri
+            else:
+                uri = self._uri
             values = ValueList(Value(cur, self._settings, uri), self._settings)
 
         if isinstance(new, Value):
@@ -165,14 +175,15 @@ class Parameters(object):
         elif isinstance(new, ValueList):
             values.extend(new)
         else:
-            uri = self._uri
             if isinstance(new, (ParameterDict, ParameterList)):
                 uri = new.uri
+            else:
+                uri = self._uri
             values.append(Value(new, self._settings, uri, parse_string=self._parse_strings))
 
         return values
 
-    def _merge_dict(self, cur, new, path):
+    def _merge_dict(self, cur, new):
         """Merge a dictionary with another dictionary.
 
         Iterate over keys in new. If this is not an initialization merge and
@@ -183,7 +194,6 @@ class Parameters(object):
         Args:
             cur (dict): Current dictionary
             new (dict): Dictionary to be merged
-            path (string): Merging path from recursion
             initmerge (bool): True if called as part of entity init
 
         Returns:
@@ -191,43 +201,49 @@ class Parameters(object):
 
         """
 
-        ret = cur
-        for (key, newvalue) in iteritems(new):
-            if key.startswith(self._settings.dict_key_override_prefix) and not self._keep_overrides:
-                if not isinstance(newvalue, Value):
-                    newvalue = Value(newvalue, self._settings, self._uri, parse_string=self._parse_strings)
-                newvalue.overwrite = True
-                ret[key.lstrip(self._settings.dict_key_override_prefix)] = newvalue
+        for (key, value) in iteritems(new):
+            if key[0] in self._settings.dict_key_prefixes:
+                newkey = key[1:]
+                if not isinstance(value, Value):
+                    value = Value(value, self._settings, self._uri, parse_string=self._parse_strings)
+                if key[0] == self._settings.dict_key_override_prefix:
+                    value.overwrite = True
+                elif key[0] == self._settings.dict_key_fixed_prefix:
+                    value.fixed = True
+                value = self._merge_recurse(cur.get(newkey), value)
+                key = newkey
             else:
-                ret[key] = self._merge_recurse(ret.get(key), newvalue, path.new_subpath(key))
+                value = self._merge_recurse(cur.get(key), value)
+            cur[key] = value
+        return cur
 
-        return ret
-
-    def _merge_recurse(self, cur, new, path=None):
+    def _merge_recurse(self, cur, new):
         """Merge a parameter with another parameter.
 
-        Iterate over keys in new. Call _merge_dict, _extend_list, or
-        _update_scalar depending on type. Pass along whether this is an
-        initialization merge.
+        Iterate over keys in new. Call _merge_dict, _update_value
+        depending on type.
 
         Args:
-            cur (dict): Current dictionary
-            new (dict): Dictionary to be merged
-            path (string): Merging path from recursion
-            initmerge (bool): True if called as part of entity init, defaults
-                to False
+            cur: Current parameter
+            new: Parameter to be merged
 
         Returns:
-            dict: a merged dictionary
+            merged parameter (Value or ValueList)
 
         """
 
-        if cur is None:
-            return new
-        elif isinstance(new, dict) and isinstance(cur, dict):
-            return self._merge_dict(cur, new, path)
+        if isinstance(new, dict):
+            if cur is None:
+                cur = ParameterDict(uri=self._uri)
+            if isinstance(cur, dict):
+                return self._merge_dict(cur, new)
+            else:
+                return self._update_value(cur, new)
         else:
-            return self._update_value(cur, new)
+            if cur is None:
+                return new
+            else:
+                return self._update_value(cur, new)
 
     def merge(self, other):
         """Merge function (public edition).
@@ -245,13 +261,13 @@ class Parameters(object):
 
         self._unrendered = None
         if isinstance(other, dict):
-            wrapped = self._wrap_dict(other, DictPath(self._settings.delimiter))
+            wrapped = self._wrap_dict(other)
         elif isinstance(other, self.__class__):
-            wrapped = other._wrap_dict(other._base, DictPath(self._settings.delimiter))
+            wrapped = other._wrap_dict(other._base)
         else:
             raise TypeError('Cannot merge %s objects into %s' % (type(other),
                             self.__class__.__name__))
-        self._base = self._merge_recurse(self._base, wrapped, DictPath(self._settings.delimiter))
+        self._base = self._merge_recurse(self._base, wrapped)
 
     def _render_simple_container(self, container, key, value, path):
             if isinstance(value, ValueList):

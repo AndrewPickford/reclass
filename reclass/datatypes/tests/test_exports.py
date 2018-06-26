@@ -21,7 +21,7 @@ class TestInvQuery(unittest.TestCase):
         e = Exports({'alpha': { 'one': 1, 'two': 2}}, SETTINGS, '')
         d = {'alpha': { 'three': 3, 'four': 4}}
         e.overwrite(d)
-        e.initialise_interpolation()
+        e.interpolate()
         self.assertEqual(e.as_dict(), d)
 
     def test_malformed_invquery(self):

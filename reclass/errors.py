@@ -15,6 +15,7 @@ import posix, sys
 import traceback
 
 from reclass.defaults import REFERENCE_SENTINELS, EXPORT_SENTINELS
+from reclass.utils.dictpath import DictPath
 
 class ReclassException(Exception):
 
@@ -140,7 +141,7 @@ class InterpolationError(ReclassException):
     def _add_context_and_uri(self):
         msg = ''
         if self.context:
-            msg += ', at %s' % self.context
+            msg += ', at %s' % str(self.context)
         if self.uri:
             msg += ', in %s' % self.uri
         return msg
@@ -255,6 +256,7 @@ class ParseError(InterpolationError):
     def _get_error_message(self):
         msg = [ 'Parse error: {0}'.format(self._line.join(EXPORT_SENTINELS)) + self._add_context_and_uri() ]
         msg.append('{0} at char {1}'.format(self._err, self._col - 1))
+        return msg
 
 
 class InfiniteRecursionError(InterpolationError):
@@ -301,6 +303,16 @@ class ExpressionError(InterpolationError):
 
     def _get_error_message(self):
         msg = [ 'Expression error: {0}'.format(self._error_msg) + self._add_context_and_uri() ]
+        return msg
+
+
+class ChangedFixedError(InterpolationError):
+
+    def __init__(self, uri):
+        super(ChangedFixedError, self).__init__(msg=None, uri=uri, tbFlag=False)
+
+    def _get_error_message(self):
+        msg = [ 'Attempt to change fixed value' + self._add_context_and_uri() ]
         return msg
 
 

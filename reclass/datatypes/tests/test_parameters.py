@@ -19,7 +19,7 @@ from reclass.settings import Settings
 from reclass.datatypes import Parameters
 from reclass.values.value import Value
 from reclass.values.scaitem import ScaItem
-from reclass.errors import InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
+from reclass.errors import ChangedFixedError, InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
 import unittest
 
 try:
@@ -337,7 +337,7 @@ class TestParametersNoMock(unittest.TestCase):
         p = Parameters(dict(dict=base), SETTINGS, '')
         p2 = Parameters(dict(dict=mergee), SETTINGS, '')
         p.merge(p2)
-        p.initialise_interpolation()
+        p.interpolate()
         self.assertDictEqual(p.as_dict(), dict(dict=goal))
 
     def test_interpolate_single(self):
@@ -733,6 +733,27 @@ class TestParametersNoMock(unittest.TestCase):
         p1.merge(p2)
         p1.merge(p3)
         p1.merge(p4)
+        p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_fixed_parameter(self):
+        p1 = Parameters({'one': { 'a': 1} }, SETTINGS, 'first')
+        p2 = Parameters({'one': { '=a': 2} }, SETTINGS, 'second')
+        p3 = Parameters({'one': { 'a': 3} }, SETTINGS, 'third')
+        with self.assertRaises(ChangedFixedError) as e:
+            p1.merge(p2)
+            p1.merge(p3)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Attempt to change fixed value, at one:a, in second; third")
+
+    def test_fixed_parameter_allow(self):
+        settings = Settings({'ignore_merging_onto_fixed': True})
+        p1 = Parameters({'one': { 'a': 1} }, settings, 'first')
+        p2 = Parameters({'one': { '=a': 2} }, settings, 'second')
+        p3 = Parameters({'one': { 'a': 3} }, settings, 'third')
+        r = {'one': { 'a': 2 } }
+        p1.merge(p2)
+        p1.merge(p3)
         p1.interpolate()
         self.assertEqual(p1.as_dict(), r)
 
