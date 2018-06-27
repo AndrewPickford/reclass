@@ -124,6 +124,55 @@ Referenced lists or dicts can now be overriden by None or empty type of dict, li
     three: ${one}
 
 
+Fixed/Immutable Parameters
+--------------------------
+
+Parameters can be labeled as fixed or immutable by using the prefix ``=``
+
+.. code-block:: yaml
+
+  parameters:
+    =one: 1
+
+If in the normal parameter merging a fixed parameter would be changed then depending
+on the setting of ``ignore_merging_onto_fixed`` either an exception is raised (``ignore_merging_onto_fixed`` false)
+or the parameter is left unchanged and no notification or error is given (``ignore_merging_onto_fixed`` true)
+
+For example with:
+
+.. code-block:: yaml
+
+  # nodes/node1.yml
+  classes:
+  - first
+  - second
+
+  # classes/first.yml
+  parameters:
+    =one: 1
+
+  # classes/second.yml
+  parameters:
+    one: 2
+
+``reclass.py --nodeinfo node1`` then gives an ''Attempt to change fixed value'' error if ``ignore_merging_onto_fixed``
+is false or gives:
+
+.. code-block:: yaml
+
+  parameters:
+    alpha:
+      one: 1
+
+if ``ignore_merging_onto_fixed`` is true
+
+Default value for ``ignore_merging_onto_fixed`` is False
+
+.. code-block:: yaml
+
+  ignore_merging_onto_fixed: False
+
+
 Nested References
 -----------------
 
@@ -155,11 +204,12 @@ the reference ``${beta:a}`` to the value 99.
 
 
 Ignore overwritten missing references
--------------------------
+-------------------------------------
 
 Given the following classes:
 
 .. code-block:: yaml
+
   # node1.yml
   classes:
   - class1
@@ -197,6 +247,7 @@ Print summary of missed references
 Instead of failing on the first undefinded reference error all missing reference errors are printed at once.
 
 .. code-block:: yaml
+
   reclass --nodeinfo mynode
   -> dontpanic
      Cannot resolve ${_param:kkk}, at mkkek3:tree:to:fail, in yaml_fs:///test/classes/third.yml
@@ -237,6 +288,7 @@ Assuming following class setup:
 Classes:
 
 .. code-block:: yaml
+
   #/etc/reclass/classes/global.yml
   parameters:
     _class:
