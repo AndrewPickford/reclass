@@ -25,36 +25,11 @@ from six import iteritems, next
 
 from collections import namedtuple
 from reclass.utils.dictpath import DictPath
+from reclass.utils.parameterdict import ParameterDict
+from reclass.utils.parameterlist import ParameterList
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
 from reclass.errors import InfiniteRecursionError, ResolveError, ResolveErrorList, InterpolationError, BadReferencesError
-
-class ParameterDict(dict):
-    def __init__(self, *args, **kwargs):
-        self._uri = kwargs.pop('uri', None)
-        dict.__init__(self, *args, **kwargs)
-
-    @property
-    def uri(self):
-        return self._uri
-
-    @uri.setter
-    def uri(self, uri):
-        self._uri = uri
-
-
-class ParameterList(list):
-    def __init__(self, *args, **kwargs):
-        self._uri = kwargs.pop('uri', None)
-        list.__init__(self, *args, **kwargs)
-
-    @property
-    def uri(self):
-        return self._uri
-
-    @uri.setter
-    def uri(self, uri):
-        self._uri = uri
 
 
 class Parameters(object):
@@ -83,8 +58,8 @@ class Parameters(object):
 
     def __init__(self, mapping, settings, uri, parse_strings=True):
         self._settings = settings
-        self._base = {}
         self._uri = uri
+        self._base = ParameterDict(uri=self._uri)
         self._unrendered = None
         self._escapes_handled = {}
         self._inv_queries = []
@@ -215,6 +190,7 @@ class Parameters(object):
             else:
                 value = self._merge_recurse(cur.get(key), value)
             cur[key] = value
+        cur.uri = new.uri
         return cur
 
     def _merge_recurse(self, cur, new):

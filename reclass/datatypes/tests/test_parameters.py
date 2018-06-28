@@ -17,6 +17,7 @@ from six import iteritems
 
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
+from reclass.utils.parameterdict import ParameterDict
 from reclass.values.value import Value
 from reclass.values.scaitem import ScaItem
 from reclass.errors import ChangedFixedError, InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
@@ -46,7 +47,7 @@ class TestParameters(unittest.TestCase):
     def _construct_mocked_params(self, iterable=None, settings=SETTINGS):
         p = Parameters(iterable, settings, '')
         self._base = base = p._base
-        p._base = mock.MagicMock(spec_set=dict, wraps=base)
+        p._base = mock.MagicMock(spec_set=ParameterDict, wraps=base)
         p._base.__repr__ = mock.MagicMock(autospec=dict.__repr__,
                                           return_value=repr(base))
         p._base.__getitem__.side_effect = base.__getitem__
@@ -290,6 +291,16 @@ class TestParametersNoMock(unittest.TestCase):
         p1.merge(p2)
         p1.interpolate()
         self.assertEqual(p1.as_dict()['key'], None)
+
+    def test_merge_list_over_dict(self):
+        p1 = Parameters({}, SETTINGS, '')
+        p2 = Parameters({'one': { 'a': { 'b': 'c' } } }, SETTINGS, 'second')
+        p3 = Parameters({'one': { 'a': [ 'b' ] } }, SETTINGS, 'third')
+        with self.assertRaises(TypeMergeError) as e:
+            p1.merge(p2)
+            p1.merge(p3)
+            p1.interpolate()
+        self.assertEqual(e.exception.message, "-> \n   Canot merge list over dictionary, at one:a, in second; third")
 
     # def test_merge_bare_dict_over_dict(self):
         # settings = Settings({'allow_bare_override': True})
