@@ -124,13 +124,15 @@ class TestParameters(unittest.TestCase):
     def test_construct_wrong_type(self):
         with self.assertRaises(TypeError) as e:
             self._construct_mocked_params(str('wrong type'))
-        self.assertEqual(e.exception.message, "Cannot merge <type 'str'> objects into Parameters")
+        self.assertIn(str(e.exception), [ "Cannot merge <type 'str'> objects into Parameters",    # python 2
+                                          "Cannot merge <class 'str'> objects into Parameters" ])  # python 3
 
     def test_merge_wrong_type(self):
         p, b = self._construct_mocked_params()
         with self.assertRaises(TypeError) as e:
             p.merge(str('wrong type'))
-        self.assertEqual(e.exception.message, "Cannot merge <type 'str'> objects into Parameters")
+        self.assertIn(str(e.exception), [ "Cannot merge <type 'str'> objects into Parameters",    # python 2
+                                          "Cannot merge <class 'str'> objects into Parameters"])   # python 3
 
     def test_get_dict(self):
         p, b = self._construct_mocked_params(SIMPLE)
@@ -381,7 +383,9 @@ class TestParametersNoMock(unittest.TestCase):
         p = Parameters(d, SETTINGS, '')
         with self.assertRaises(InfiniteRecursionError) as e:
             p.interpolate()
-        self.assertEqual(e.exception.message, "-> \n   Infinite recursion: ${foo}, at bar")
+        # interpolation can start with foo or bar
+        self.assertIn(e.exception.message, [ "-> \n   Infinite recursion: ${foo}, at bar",
+                                             "-> \n   Infinite recursion: ${bar}, at foo"])
 
     def test_nested_references(self):
         d = {'a': '${${z}}', 'b': 2, 'z': 'b'}
@@ -631,7 +635,9 @@ class TestParametersNoMock(unittest.TestCase):
         p1 = Parameters({'alpha': '${gamma}', 'beta': '${gamma}'}, SETTINGS, '')
         with self.assertRaises(ResolveErrorList) as error:
             p1.interpolate()
-        self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${gamma}, at alpha\n   Cannot resolve ${gamma}, at beta")
+        # interpolation can start with either alpha or beta
+        self.assertIn(error.exception.message, [ "-> \n   Cannot resolve ${gamma}, at alpha\n   Cannot resolve ${gamma}, at beta",
+                                                    "-> \n   Cannot resolve ${gamma}, at beta\n   Cannot resolve ${gamma}, at alpha"])
 
     def test_force_single_resolve_error(self):
         settings = copy.deepcopy(SETTINGS)
@@ -639,7 +645,9 @@ class TestParametersNoMock(unittest.TestCase):
         p1 = Parameters({'alpha': '${gamma}', 'beta': '${gamma}'}, settings, '')
         with self.assertRaises(ResolveError) as error:
             p1.interpolate()
-        self.assertEqual(error.exception.message, "-> \n   Cannot resolve ${gamma}, at alpha")
+        # interpolation can start with either alpha or beta
+        self.assertIn(error.exception.message, [ "-> \n   Cannot resolve ${gamma}, at alpha",
+                                                 "-> \n   Cannot resolve ${gamma}, at beta"])
 
     def test_ignore_overwriten_missing_reference(self):
         settings = copy.deepcopy(SETTINGS)

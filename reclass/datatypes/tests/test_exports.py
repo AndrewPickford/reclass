@@ -62,9 +62,10 @@ class TestInvQuery(unittest.TestCase):
     def test_list_if_expr_invquery(self):
         e = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 3}, 'node3': {'a': 3, 'b': 2}}
         p = Parameters({'exp': '$[ if exports:b == 2 ]'}, SETTINGS, '')
-        r = {'exp': ['node1', 'node3']}
+        r1 = {'exp': ['node1', 'node3']}
+        r2 = {'exp': ['node3', 'node1']}
         p.interpolate(e)
-        self.assertEqual(p.as_dict(), r)
+        self.assertIn(p.as_dict(), [ r1, r2 ])
 
     def test_if_expr_invquery_wth_and(self):
         e = {'node1': {'a': 1, 'b': 4, 'c': False}, 'node2': {'a': 3, 'b': 4, 'c': True}}
@@ -97,9 +98,10 @@ class TestInvQuery(unittest.TestCase):
     def test_list_if_expr_invquery_with_and(self):
         e = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 3}, 'node3': {'a': 3, 'b': 4}}
         p = Parameters({'exp': '$[ if exports:b == 2 or exports:b == 4 ]'}, SETTINGS, '')
-        r = {'exp': ['node1', 'node3']}
+        r1 = {'exp': ['node1', 'node3']}
+        r2 = {'exp': ['node3', 'node1']}
         p.interpolate(e)
-        self.assertEqual(p.as_dict(), r)
+        self.assertIn(p.as_dict(), [ r1, r2 ])
 
 if __name__ == '__main__':
     unittest.main()
