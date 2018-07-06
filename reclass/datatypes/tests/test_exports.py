@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from reclass.utils.parameterdict import ParameterDict
+from reclass.utils.parameterlist import ParameterList
 from reclass.settings import Settings
 from reclass.datatypes import Exports, Parameters
 from reclass.errors import ParseError
@@ -23,6 +25,16 @@ class TestInvQuery(unittest.TestCase):
         e.overwrite(d)
         e.interpolate()
         self.assertEqual(e.as_dict(), d)
+
+    def test_interpolate_types(self):
+        e = Exports({'alpha': { 'one': 1, 'two': 2}, 'beta': [ 1, 2 ]}, SETTINGS, '')
+        r = {'alpha': { 'one': 1, 'two': 2}, 'beta': [ 1, 2 ]}
+        self.assertIs(type(e.as_dict()['alpha']), ParameterDict)
+        self.assertIs(type(e.as_dict()['beta']), ParameterList)
+        e.interpolate()
+        self.assertIs(type(e.as_dict()['alpha']), dict)
+        self.assertIs(type(e.as_dict()['beta']), list)
+        self.assertEqual(e.as_dict(), r)
 
     def test_malformed_invquery(self):
         with self.assertRaises(ParseError):

@@ -92,7 +92,7 @@ class Exports(Parameters):
             e.context = path
             raise
         if isinstance(new, dict):
-            self._render_simple_dict(new, path)
+            new = self._render_simple_dict(new, path)
         elif isinstance(new, list):
-            self._render_simple_list(new, path)
+            new = self._render_simple_list(new, path)
         return new

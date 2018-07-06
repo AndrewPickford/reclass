@@ -18,7 +18,9 @@ from six import iteritems
 from reclass.settings import Settings
 from reclass.datatypes import Parameters
 from reclass.utils.parameterdict import ParameterDict
+from reclass.utils.parameterlist import ParameterList
 from reclass.values.value import Value
+from reclass.values.valuelist import ValueList
 from reclass.values.scaitem import ScaItem
 from reclass.errors import ChangedFixedError, InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
 import unittest
@@ -774,6 +776,46 @@ class TestParametersNoMock(unittest.TestCase):
         p1.merge(p2)
         p1.merge(p3)
         p1.interpolate()
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_interpolated_list_type(self):
+        p1 = Parameters({'a': [ 1, 2, 3 ]}, SETTINGS, 'first')
+        r = {'a': [ 1, 2, 3 ]}
+        self.assertIs(type(p1.as_dict()['a']), ParameterList)
+        p1.interpolate()
+        self.assertIs(type(p1.as_dict()['a']), list)
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_interpolated_dict_type(self):
+        p1 = Parameters({'a': { 'one': 1, 'two': 2, 'three': 3 }}, SETTINGS, 'first')
+        r = {'a': { 'one': 1, 'two': 2, 'three': 3 }}
+        self.assertIs(type(p1.as_dict()['a']), ParameterDict)
+        p1.interpolate()
+        self.assertIs(type(p1.as_dict()['a']), dict)
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_merged_interpolated_list_type(self):
+        p1 = Parameters({'a': [ 1, 2, 3 ]}, SETTINGS, 'first')
+        p2 = Parameters({'a': [ 4, 5, 6 ]}, SETTINGS, 'second')
+        r = {'a': [ 1, 2, 3, 4, 5, 6 ]}
+        self.assertIs(type(p1.as_dict()['a']), ParameterList)
+        self.assertIs(type(p2.as_dict()['a']), ParameterList)
+        p1.merge(p2)
+        self.assertIs(type(p1.as_dict()['a']), ValueList)
+        p1.interpolate()
+        self.assertIs(type(p1.as_dict()['a']), list)
+        self.assertEqual(p1.as_dict(), r)
+
+    def test_merged_interpolated_dict_type(self):
+        p1 = Parameters({'a': { 'one': 1, 'two': 2, 'three': 3 }}, SETTINGS, 'first')
+        p2 = Parameters({'a': { 'four': 4, 'five': 5, 'six': 6 }}, SETTINGS, 'second')
+        r = {'a': { 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}}
+        self.assertIs(type(p1.as_dict()['a']), ParameterDict)
+        self.assertIs(type(p2.as_dict()['a']), ParameterDict)
+        p1.merge(p2)
+        self.assertIs(type(p1.as_dict()['a']), ParameterDict)
+        p1.interpolate()
+        self.assertIs(type(p1.as_dict()['a']), dict)
         self.assertEqual(p1.as_dict(), r)
 
 

@@ -167,6 +167,19 @@ class TestEntity(unittest.TestCase):
 
 class TestEntityNoMock(unittest.TestCase):
 
+    def test_interpolate_list_types(self):
+        node1_exports = Exports({'exps': [ '${one}' ] }, SETTINGS, 'first')
+        node1_parameters = Parameters({'alpha': [ '${two}', '${three}' ], 'one': 1, 'two': 2, 'three': 3 }, SETTINGS, 'first')
+        node1_entity = Entity(SETTINGS, classes=None, applications=None, parameters=node1_parameters, exports=node1_exports)
+        node2_exports = Exports({'exps': '${alpha}' }, SETTINGS, 'second')
+        node2_parameters = Parameters({}, SETTINGS, 'second')
+        node2_entity = Entity(SETTINGS, classes=None, applications=None, parameters=node2_parameters, exports=node2_exports)
+        r = {'exps': [ 1, 2, 3 ]}
+        node1_entity.merge(node2_entity)
+        node1_entity.interpolate(None)
+        self.assertIs(type(node1_entity.exports.as_dict()['exps']), list)
+        self.assertDictEqual(node1_entity.exports.as_dict(), r)
+
     def test_exports_with_refs(self):
         inventory = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 4}}
         node3_exports = Exports({'a': '${a}', 'b': '${b}'}, SETTINGS, '')
