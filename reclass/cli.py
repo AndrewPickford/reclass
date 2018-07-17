@@ -31,7 +31,10 @@ def main():
         defaults.update(find_and_read_configfile())
 
         options = get_options(RECLASS_NAME, VERSION, DESCRIPTION, defaults=defaults)
-        storage = get_storage(options.storage_type, options.nodes_uri, options.classes_uri)
+        storage = get_storage(options.storage_type,
+                              options.nodes_uri,
+                              options.classes_uri,
+                              options.add_subdir_to_node)
         class_mappings = defaults.get('class_mappings')
         defaults.update(vars(options))
         settings = Settings(defaults)

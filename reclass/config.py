@@ -36,6 +36,9 @@ def make_db_options_group(parser, defaults={}):
     ret.add_option('-z', '--ignore-class-notfound', dest='ignore_class_notfound',
                    default=defaults.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND),
                    help='decision for not found classes [%default]')
+    ret.add_option('-a', '--add-subdir-to-node', dest='add_subdir_to_node', action="store_true",
+                   default=defaults.get('add_subdir_to_node', OPT_ADD_SUBDIR_TO_NODE),
+                   help='Add subdir when generating node names. [%default]')
     ret.add_option('-x', '--ignore-class-notfound-regexp', dest='ignore_class_notfound_regexp',
                    default=defaults.get('ignore_class_notfound_regexp', OPT_IGNORE_CLASS_NOTFOUND_REGEXP),
                    help='regexp for not found classes [%default]')

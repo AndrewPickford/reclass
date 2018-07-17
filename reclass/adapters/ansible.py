@@ -66,7 +66,10 @@ def cli():
                               add_options_cb=add_ansible_options_group,
                               defaults=defaults)
 
-        storage = get_storage(options.storage_type, options.nodes_uri, options.classes_uri)
+        storage = get_storage(options.storage_type,
+                              options.nodes_uri,
+                              options.classes_uri,
+                              options.add_subdir_to_node)
         class_mappings = defaults.get('class_mappings')
         defaults.update(vars(options))
         settings = Settings(defaults)

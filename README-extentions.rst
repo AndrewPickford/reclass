@@ -228,7 +228,7 @@ Given the following classes:
   parameters:
     y: 1
 
-  
+
 The parameter ``a`` only depends on the parameter ``y`` through the reference set in class2. The fact that the parameter ``x`` referenced
 in class1 is not defined does not affect the final value of the parameter ``a``. For such overwritten missing references by default a warning is
 printed but no error is raised, providing the final value of the parameter being evaluated is a scalar. If the final value is a dictionary or list
@@ -507,3 +507,32 @@ In practise the exports:cluster key can be set using a parameter reference:
 
 The above exports and parameter definitions could be put into a separate class and then included by nodes which require
 access to the database and included by the database server as well.
+
+
+Add subfolders to node name
+---------------------------
+
+Nodes can be defined in subdirectories. However, node names (filename) must be unique across all subdirectories.
+
+For example, the following file structure is invalid:
+
+.. code-block:: yaml
+
+  inventory/nodes/prod/mysql.yml
+  inventory/nodes/staging/mysql.yml
+
+With setting:
+
+.. code-block:: yaml
+
+  add_subdir_to_node: True       # default False
+
+This adds the subfolder to the node name and the structure above can then be used. It generates the following reclass objects:
+
+.. code-block:: yaml
+
+  nodes:
+    prod.mysql:
+      ...
+    staging.mysql:
+      ...

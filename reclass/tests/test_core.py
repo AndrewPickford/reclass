@@ -27,8 +27,8 @@ class TestCore(unittest.TestCase):
         inventory_uri = os.path.dirname(os.path.abspath(__file__)) + '/data/' + dataset
         path_mangler = get_path_mangler('yaml_fs')
         nodes_uri, classes_uri = path_mangler(inventory_uri, 'nodes', 'classes')
-        storage = get_storage('yaml_fs', nodes_uri, classes_uri)
         settings = Settings(opts)
+        storage = get_storage('yaml_fs', nodes_uri, classes_uri, settings.add_subdir_to_node)
         return Core(storage, None, settings)
 
     def test_type_conversion(self):
