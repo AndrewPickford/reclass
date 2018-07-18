@@ -183,8 +183,8 @@ class Parameters(object):
                     value = Value(value, self._settings, self._uri, parse_string=self._parse_strings)
                 if key[0] == self._settings.dict_key_override_prefix:
                     value.overwrite = True
-                elif key[0] == self._settings.dict_key_fixed_prefix:
-                    value.fixed = True
+                elif key[0] == self._settings.dict_key_constant_prefix:
+                    value.constant = True
                 value = self._merge_recurse(cur.get(newkey), value)
                 key = newkey
             else:

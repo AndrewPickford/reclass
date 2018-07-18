@@ -124,19 +124,19 @@ Referenced lists or dicts can now be overriden by None or empty type of dict, li
     three: ${one}
 
 
-Fixed/Immutable Parameters
+Constant Parameters
 --------------------------
 
-Parameters can be labeled as fixed or immutable by using the prefix ``=``
+Parameters can be labeled as constant by using the prefix ``=``
 
 .. code-block:: yaml
 
   parameters:
     =one: 1
 
-If in the normal parameter merging a fixed parameter would be changed then depending
-on the setting of ``ignore_merging_onto_fixed`` either an exception is raised (``ignore_merging_onto_fixed`` false)
-or the parameter is left unchanged and no notification or error is given (``ignore_merging_onto_fixed`` true)
+If in the normal parameter merging a constant parameter would be changed then depending
+on the setting of ``strict_constant_parameters`` either an exception is raised (``strict_constant_parameters`` true)
+or the parameter is left unchanged and no notification or error is given (``strict_constant_parameters`` false)
 
 For example with:
 
@@ -155,8 +155,8 @@ For example with:
   parameters:
     one: 2
 
-``reclass.py --nodeinfo node1`` then gives an ''Attempt to change fixed value'' error if ``ignore_merging_onto_fixed``
-is false or gives:
+``reclass.py --nodeinfo node1`` then gives an ''Attempt to change constant value'' error if ``strict_constant_parameters``
+is true or gives:
 
 .. code-block:: yaml
 
@@ -164,13 +164,13 @@ is false or gives:
     alpha:
       one: 1
 
-if ``ignore_merging_onto_fixed`` is true
+if ``strict_constant_parameters`` is false
 
-Default value for ``ignore_merging_onto_fixed`` is False
+Default value for ``strict_constant_parameters`` is True
 
 .. code-block:: yaml
 
-  ignore_merging_onto_fixed: False
+  strict_constant_parameters: True
 
 
 Nested References

@@ -306,13 +306,13 @@ class ExpressionError(InterpolationError):
         return msg
 
 
-class ChangedFixedError(InterpolationError):
+class ChangedConstantError(InterpolationError):
 
     def __init__(self, uri):
-        super(ChangedFixedError, self).__init__(msg=None, uri=uri, tbFlag=False)
+        super(ChangedConstantError, self).__init__(msg=None, uri=uri, tbFlag=False)
 
     def _get_error_message(self):
-        msg = [ 'Attempt to change fixed value' + self._add_context_and_uri() ]
+        msg = [ 'Attempt to change constant value' + self._add_context_and_uri() ]
         return msg
 
 

@@ -22,7 +22,7 @@ from reclass.utils.parameterlist import ParameterList
 from reclass.values.value import Value
 from reclass.values.valuelist import ValueList
 from reclass.values.scaitem import ScaItem
-from reclass.errors import ChangedFixedError, InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
+from reclass.errors import ChangedConstantError, InfiniteRecursionError, InterpolationError, ResolveError, ResolveErrorList, TypeMergeError
 import unittest
 
 try:
@@ -757,18 +757,18 @@ class TestParametersNoMock(unittest.TestCase):
         p1.interpolate()
         self.assertEqual(p1.as_dict(), r)
 
-    def test_fixed_parameter(self):
+    def test_strict_constant_parameter(self):
         p1 = Parameters({'one': { 'a': 1} }, SETTINGS, 'first')
         p2 = Parameters({'one': { '=a': 2} }, SETTINGS, 'second')
         p3 = Parameters({'one': { 'a': 3} }, SETTINGS, 'third')
-        with self.assertRaises(ChangedFixedError) as e:
+        with self.assertRaises(ChangedConstantError) as e:
             p1.merge(p2)
             p1.merge(p3)
             p1.interpolate()
-        self.assertEqual(e.exception.message, "-> \n   Attempt to change fixed value, at one:a, in second; third")
+        self.assertEqual(e.exception.message, "-> \n   Attempt to change constant value, at one:a, in second; third")
 
-    def test_fixed_parameter_allow(self):
-        settings = Settings({'ignore_merging_onto_fixed': True})
+    def test_constant_parameter(self):
+        settings = Settings({'strict_constant_parameters': False})
         p1 = Parameters({'one': { 'a': 1} }, settings, 'first')
         p2 = Parameters({'one': { '=a': 2} }, settings, 'second')
         p3 = Parameters({'one': { 'a': 3} }, settings, 'third')
