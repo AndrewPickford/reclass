@@ -18,6 +18,7 @@ class ListItem(Item):
         self._list = item
         self._settings = settings
 
+    @property
     def contents(self):
         return self._list
 

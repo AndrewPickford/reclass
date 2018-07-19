@@ -18,7 +18,13 @@ import time
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    import pygit2
+    try:
+        # NOTE: in some distros pygit2 could require special effort to acquire.
+        # It is not a problem per se, but it breaks tests for no real reason.
+        # This try block is for keeping tests sane.
+        import pygit2
+    except ImportError:
+        pygit2 = None
 
 from six import iteritems
 
@@ -71,6 +77,8 @@ class GitURI(object):
 class GitRepo(object):
 
     def __init__(self, uri):
+        if pygit2 is None:
+            raise errors.MissingModuleError('pygit2')
         self.transport, _, self.url = uri.repo.partition('://')
         self.name = self.url.replace('/', '_')
         self.credentials = None

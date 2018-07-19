@@ -21,18 +21,16 @@ class RefItem(Item):
         self.type = Item.REFERENCE
         self._settings = settings
         self._items = items
-        self._refs = []
-        self._allRefs = False
         self.assembleRefs()
 
     def assembleRefs(self, context={}):
         self._refs = []
         self._allRefs = True
         for item in self._items:
-            if item.has_references():
+            if item.has_references:
                 item.assembleRefs(context)
                 self._refs.extend(item.get_references())
-                if item.allRefs() == False:
+                if item.allRefs == False:
                     self._allRefs = False
         try:
             strings = [ str(i.render(context, None)) for i in self._items ]
@@ -41,12 +39,15 @@ class RefItem(Item):
         except ResolveError as e:
             self._allRefs = False
 
+    @property
     def contents(self):
         return self._items
 
+    @property
     def allRefs(self):
         return self._allRefs
 
+    @property
     def has_references(self):
         return len(self._refs) > 0
 

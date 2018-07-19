@@ -48,24 +48,28 @@ class ValueList(object):
         self._is_complex = False
         item_type = self._values[0].item_type()
         for v in self._values:
-            if v.is_complex() or v.constant or v.overwrite or v.item_type() != item_type:
+            if v.is_complex or v.constant or v.overwrite or v.item_type() != item_type:
                 self._is_complex = True
 
+    @property
     def has_references(self):
         return len(self._refs) > 0
 
+    @property
     def has_inv_query(self):
         return self._has_inv_query
 
     def get_inv_references(self):
         return self._inv_refs
 
+    @property
     def is_complex(self):
         return self._is_complex
 
     def get_references(self):
         return self._refs
 
+    @property
     def allRefs(self):
         return self._allRefs
 
@@ -76,7 +80,7 @@ class ValueList(object):
         self._has_inv_query = False
         self._ignore_failed_render = True
         for value in self._values:
-            if value.has_inv_query():
+            if value.has_inv_query:
                 self._inv_refs.extend(value.get_inv_references)
                 self._has_inv_query = True
                 if vale.ignore_failed_render() is False:
@@ -89,9 +93,9 @@ class ValueList(object):
         self._allRefs = True
         for value in self._values:
             value.assembleRefs(context)
-            if value.has_references():
+            if value.has_references:
                 self._refs.extend(value.get_references())
-            if value.allRefs() is False:
+            if value.allRefs is False:
                 self._allRefs = False
 
     def merge(self):

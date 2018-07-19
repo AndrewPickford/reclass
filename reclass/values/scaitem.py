@@ -18,6 +18,7 @@ class ScaItem(Item):
         self._value = value
         self._settings = settings
 
+    @property
     def contents(self):
         return self._value
 

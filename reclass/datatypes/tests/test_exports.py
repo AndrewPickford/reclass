@@ -101,11 +101,16 @@ class TestInvQuery(unittest.TestCase):
         self.assertEqual(p.as_dict(), r)
 
     def test_list_if_expr_invquery_with_and_missing(self):
-        e = {'node1': {'a': 1, 'b': 2, 'c': 'green'}, 'node2': {'a': 3, 'b': 3}, 'node3': {'a': 3, 'b': 2}}
-        p = Parameters({'exp': '$[ if exports:b == 2 and exports:c == green ]'}, SETTINGS, '')
-        r = {'exp': ['node1']}
-        p.interpolate(e)
-        self.assertEqual(p.as_dict(), r)
+        inventory = {'node1': {'a': 1, 'b': 2, 'c': 'green'},
+                     'node2': {'a': 3, 'b': 3},
+                     'node3': {'a': 3, 'b': 2}}
+        mapping = {'exp': '$[ if exports:b == 2 and exports:c == green ]'}
+        expected = {'exp': ['node1']}
+
+        pars = Parameters(mapping, SETTINGS, '')
+        pars.interpolate(inventory)
+
+        self.assertEqual(pars.as_dict(), expected)
 
     def test_list_if_expr_invquery_with_and(self):
         e = {'node1': {'a': 1, 'b': 2}, 'node2': {'a': 3, 'b': 3}, 'node3': {'a': 3, 'b': 4}}

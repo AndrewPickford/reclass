@@ -17,26 +17,29 @@ class CompItem(Item):
         self.type = Item.COMPOSITE
         self._items = items
         self._settings = settings
-        self._refs = []
-        self._allRefs = False
         self.assembleRefs()
 
+    # TODO: possibility of confusion. Looks like 'assemble' should be either
+    # 'gather' or 'extract'.
     def assembleRefs(self, context={}):
         self._refs = []
         self._allRefs = True
         for item in self._items:
-            if item.has_references():
+            if item.has_references:
                 item.assembleRefs(context)
                 self._refs.extend(item.get_references())
-                if item.allRefs() is False:
+                if item.allRefs is False:
                     self._allRefs = False
 
+    @property
     def contents(self):
         return self._items
 
+    @property
     def allRefs(self):
         return self._allRefs
 
+    @property
     def has_references(self):
         return len(self._refs) > 0
 

@@ -93,9 +93,9 @@ class DictPath(object):
     def __hash__(self):
         return hash(str(self))
 
-    def _get_path(self):
+    @property
+    def path(self):
         return self._parts
-    path = property(_get_path)
 
     def _get_key(self):
         if len(self._parts) == 0:
@@ -114,17 +114,8 @@ class DictPath(object):
     def _split_string(self, string):
         return re.split(r'(?<!\\)' + re.escape(self._delim), string)
 
-    def _escape_string(self, string):
-        return string.replace(self._delim, '\\' + self._delim)
-
-    def has_ancestors(self):
-        return len(self._parts) > 1
-
     def key_parts(self):
-        if self.has_ancestors():
-            return self._parts[:-1]
-        else:
-            return []
+        return self._parts[:-1]
 
     def new_subpath(self, key):
         return DictPath(self._delim, self._parts + [key])

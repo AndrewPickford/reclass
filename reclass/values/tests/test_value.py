@@ -11,8 +11,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import pyparsing as pp
-
 from reclass.settings import Settings
 from reclass.values.value import Value
 from reclass.errors import ResolveError, ParseError
@@ -42,14 +40,14 @@ class TestValue(unittest.TestCase):
     def test_simple_string(self):
         s = 'my cat likes to hide in boxes'
         tv = Value(s, SETTINGS, '')
-        self.assertFalse(tv.has_references())
+        self.assertFalse(tv.has_references)
         self.assertEquals(tv.render(CONTEXT, None), s)
 
     def _test_solo_ref(self, key):
         s = _var(key)
         tv = Value(s, SETTINGS, '')
         res = tv.render(CONTEXT, None)
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         self.assertEqual(res, CONTEXT[key])
 
     def test_solo_ref_string(self):
@@ -70,7 +68,7 @@ class TestValue(unittest.TestCase):
     def test_single_subst_bothends(self):
         s = 'I like ' + _var('favcolour') + ' and I like it'
         tv = Value(s, SETTINGS, '')
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         self.assertEqual(tv.render(CONTEXT, None),
                          _poor_mans_template(s, 'favcolour',
                                              CONTEXT['favcolour']))
@@ -78,7 +76,7 @@ class TestValue(unittest.TestCase):
     def test_single_subst_start(self):
         s = _var('favcolour') + ' is my favourite colour'
         tv = Value(s, SETTINGS, '')
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         self.assertEqual(tv.render(CONTEXT, None),
                          _poor_mans_template(s, 'favcolour',
                                              CONTEXT['favcolour']))
@@ -86,7 +84,7 @@ class TestValue(unittest.TestCase):
     def test_single_subst_end(self):
         s = 'I like ' + _var('favcolour')
         tv = Value(s, SETTINGS, '')
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         self.assertEqual(tv.render(CONTEXT, None),
                          _poor_mans_template(s, 'favcolour',
                                              CONTEXT['favcolour']))
@@ -95,7 +93,7 @@ class TestValue(unittest.TestCase):
         motd = SETTINGS.delimiter.join(('motd', 'greeting'))
         s = _var(motd)
         tv = Value(s, SETTINGS, '')
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         self.assertEqual(tv.render(CONTEXT, None),
                          _poor_mans_template(s, motd,
                                              CONTEXT['motd']['greeting']))
@@ -104,7 +102,7 @@ class TestValue(unittest.TestCase):
         greet = SETTINGS.delimiter.join(('motd', 'greeting'))
         s = _var(greet) + ' I like ' + _var('favcolour') + '!'
         tv = Value(s, SETTINGS, '')
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         want = _poor_mans_template(s, greet, CONTEXT['motd']['greeting'])
         want = _poor_mans_template(want, 'favcolour', CONTEXT['favcolour'])
         self.assertEqual(tv.render(CONTEXT, None), want)
@@ -113,7 +111,7 @@ class TestValue(unittest.TestCase):
         greet = SETTINGS.delimiter.join(('motd', 'greeting'))
         s = _var(greet) + ' I like ' + _var('favcolour')
         tv = Value(s, SETTINGS, '')
-        self.assertTrue(tv.has_references())
+        self.assertTrue(tv.has_references)
         want = _poor_mans_template(s, greet, CONTEXT['motd']['greeting'])
         want = _poor_mans_template(want, 'favcolour', CONTEXT['favcolour'])
         self.assertEqual(tv.render(CONTEXT, None), want)

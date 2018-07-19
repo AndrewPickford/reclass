@@ -18,6 +18,7 @@ class DictItem(Item):
         self._dict = item
         self._settings = settings
 
+    @property
     def contents(self):
         return self._dict
 

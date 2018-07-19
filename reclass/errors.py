@@ -359,3 +359,10 @@ class DuplicateNodeNameError(NameError):
               "definition in '{3}'. Nodes can only be defined once " \
               "per inventory."
         return msg.format(self._storage, self._name, self._uris[1], self._uris[0])
+
+
+class MissingModuleError(ReclassException):
+
+    def __init__(self, modname):
+        msg = "Module %s is missing" % modname
+        super(MissingModuleError, self).__init__(rc=posix.EX_DATAERR, msg=msg)

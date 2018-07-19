@@ -9,9 +9,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
+import functools
 import pyparsing as pp
 
-from six import iteritems, string_types
+from six import iteritems
+from six import string_types
 
 from .item import Item
 from reclass.settings import Settings
@@ -35,15 +37,68 @@ _NOT_EQUAL = '!='
 _IGNORE_ERRORS = '+IgnoreErrors'
 _ALL_ENVS = '+AllEnvs'
 
+
+def _get_parser():
+    def tag_with(tag, transform=lambda x:x):
+        def inner(tag, string, location, tokens):
+            token = transform(tokens[0])
+            tokens[0] = (tag, token)
+        return functools.partial(inner, tag)
+
+    _object = tag_with(_OBJ)
+    _option = tag_with(_OPTION)
+    _expr_list_test = tag_with(_LIST_TEST)
+    _test = tag_with(_TEST)
+    _logical = tag_with(_LOGICAL)
+    _if = tag_with(_IF)
+    _expr_var = tag_with(_VALUE)
+    _expr_test = tag_with(_TEST)
+    _integer = tag_with(_OBJ, int)
+    _number = tag_with(_OBJ, float)
+
+    end = pp.StringEnd()
+    ignore_errors = pp.CaselessLiteral(_IGNORE_ERRORS)
+    all_envs = pp.CaselessLiteral(_ALL_ENVS)
+    option = (ignore_errors | all_envs).setParseAction(_option)
+    options = pp.Group(pp.ZeroOrMore(option))
+    operator_test = (pp.Literal(_EQUAL) |
+                     pp.Literal(_NOT_EQUAL)).setParseAction(_test)
+    operator_logical = (pp.CaselessLiteral(_AND) |
+                        pp.CaselessLiteral(_OR)).setParseAction(_logical)
+    begin_if = pp.CaselessLiteral(_IF).setParseAction(_if)
+    obj = pp.Word(pp.printables).setParseAction(_object)
+    sign = pp.Optional(pp.Literal('-'))
+    number = pp.Word(pp.nums)
+    dpoint = pp.Literal('.')
+    integer = pp.Combine(sign + number + pp.WordEnd()).setParseAction(_integer)
+    real = pp.Combine(sign +
+                      ((number + dpoint + number) |
+                       (dpoint + number) |
+                       (number + dpoint))
+                     ).setParseAction(_number)
+    item = integer | real | obj
+
+    single_test = item + operator_test + item
+    additional_test = operator_logical + single_test
+    expr_var = pp.Group(obj + end).setParseAction(_expr_var)
+    expr_test = pp.Group(obj + begin_if + single_test +
+                         pp.ZeroOrMore(additional_test) +
+                         end).setParseAction(_expr_test)
+    expr_list_test = pp.Group(begin_if + single_test +
+                              pp.ZeroOrMore(additional_test) +
+                              end).setParseAction(_expr_list_test)
+    expr = expr_test | expr_var | expr_list_test
+    line = options + expr + end
+    return line
+
+
 class Element(object):
 
     def __init__(self, expression, delimiter):
         self._delimiter = delimiter
-        self._export_path = None
-        self._parameter_path = None
-        self._parameter_value = None
-        self._export_path, self._parameter_path, self._parameter_value = self._get_vars(expression[0][1], self._export_path, self._parameter_path, self._parameter_value)
-        self._export_path, self._parameter_path, self._parameter_value = self._get_vars(expression[2][1], self._export_path, self._parameter_path, self._parameter_value)
+        # TODO: this double sommersault must be cleaned
+        _ = self._get_vars(expression[2][1], *self._get_vars(expression[0][1]))
+        self._export_path, self._parameter_path, self._parameter_value = _
 
         try:
             self._export_path.drop_first()
@@ -82,7 +137,8 @@ class Element(object):
                 if export_value != self._parameter_value:
                     result = True
             else:
-                raise ExpressionError('Unknown test {0}'.format(self._test), tbFlag=False)
+                raise ExpressionError('Unknown test {0}'.format(self._test),
+                                      tbFlag=False)
             return result
         else:
             return False
@@ -93,7 +149,7 @@ class Element(object):
         except KeyError as e:
             raise ResolveError(str(path))
 
-    def _get_vars(self, var, export, parameter, value):
+    def _get_vars(self, var, export=None, parameter=None, value=None):
         if isinstance(var, string_types):
             path = DictPath(self._delimiter, var)
             if path.path[0].lower() == 'exports':
@@ -150,81 +206,14 @@ class Question(object):
                 elif self._operators[i] == _OR:
                     result = result or next_result
                 else:
-                    raise ExpressionError('Unknown operator {0} {1}'.format(self._operators[i], self.elements), tbFlag=False)
+                    emsg = 'Unknown operator {0} {1}'.format(
+                        self._operators[i], self.elements)
+                    raise ExpressionError(emsg, tbFlag=False)
             return result
 
 
 class InvItem(Item):
 
-    def _get_parser():
-
-        def _object(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_OBJ, token)
-
-        def _integer(string, location, tokens):
-            try:
-                token = int(tokens[0])
-            except ValueError:
-                token = tokens[0]
-            tokens[0] = (_OBJ, token)
-
-        def _number(string, location, tokens):
-            try:
-                token = float(tokens[0])
-            except ValueError:
-                token = tokens[0]
-            tokens[0] = (_OBJ, token)
-
-        def _option(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_OPTION, token)
-
-        def _test(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_TEST, token)
-
-        def _logical(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_LOGICAL, token)
-
-        def _if(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_IF, token)
-
-        def _expr_var(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_VALUE, token)
-
-        def _expr_test(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_TEST, token)
-
-        def _expr_list_test(string, location, tokens):
-            token = tokens[0]
-            tokens[0] = (_LIST_TEST, token)
-
-        white_space = pp.White().suppress()
-        end = pp.StringEnd()
-        ignore_errors = pp.CaselessLiteral(_IGNORE_ERRORS)
-        all_envs = pp.CaselessLiteral(_ALL_ENVS)
-        option = (ignore_errors | all_envs).setParseAction(_option)
-        options = pp.Group(pp.ZeroOrMore(option + white_space))
-        operator_test = (pp.Literal(_EQUAL) | pp.Literal(_NOT_EQUAL)).setParseAction(_test)
-        operator_logical = (pp.CaselessLiteral(_AND) | pp.CaselessLiteral(_OR)).setParseAction(_logical)
-        begin_if = pp.CaselessLiteral(_IF, ).setParseAction(_if)
-        obj = pp.Word(pp.printables).setParseAction(_object)
-        integer = pp.Word('0123456789-').setParseAction(_integer)
-        number = pp.Word('0123456789-.').setParseAction(_number)
-        item = integer | number | obj
-        single_test = white_space + item + white_space + operator_test + white_space + item
-        additional_test = white_space + operator_logical + single_test
-        expr_var = pp.Group(obj + pp.Optional(white_space) + end).setParseAction(_expr_var)
-        expr_test = pp.Group(obj + white_space + begin_if + single_test + pp.ZeroOrMore(additional_test) + end).setParseAction(_expr_test)
-        expr_list_test = pp.Group(begin_if + single_test + pp.ZeroOrMore(additional_test) + end).setParseAction(_expr_list_test)
-        expr = (expr_test | expr_var | expr_list_test)
-        line = options + expr + end
-        return line
 
     _parser = _get_parser()
 
@@ -238,7 +227,7 @@ class InvItem(Item):
 
     def _parse_expression(self, expr):
         try:
-            tokens = InvItem._parser.parseString(expr).asList()
+            tokens = self._parser.parseString(expr).asList()
         except pp.ParseException as e:
             raise ParseError(e.msg, e.line, e.col, e.lineno)
 
@@ -278,12 +267,15 @@ class InvItem(Item):
     def assembleRefs(self, context):
         return
 
+    @property
     def contents(self):
         return self._expr_text
 
+    @property
     def has_inv_query(self):
         return True
 
+    @property
     def has_references(self):
         return len(self._question.refs()) > 0
 

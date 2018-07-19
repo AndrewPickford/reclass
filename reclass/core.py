@@ -210,8 +210,8 @@ class Core(object):
         try:
             node = self._node_entity(nodename)
             node.initialise_interpolation()
-            if node.parameters.has_inv_query() and inventory is None:
-                inventory = self._get_inventory(node.parameters.needs_all_envs(), node.environment, node.parameters.get_inv_queries())
+            if node.parameters.has_inv_query and inventory is None:
+                inventory = self._get_inventory(node.parameters.needs_all_envs, node.environment, node.parameters.get_inv_queries())
             node.interpolate(inventory)
             return node
         except InterpolationError as e:
@@ -237,7 +237,7 @@ class Core(object):
         inventory = self._get_inventory(True, '', None)
         for n in self._storage.enumerate_nodes():
             entities[n] = self._nodeinfo(n, inventory)
-            if entities[n].parameters.has_inv_query():
+            if entities[n].parameters.has_inv_query:
                 nodes.add(n)
         for n in query_nodes:
             entities[n] = self._nodeinfo(n, inventory)

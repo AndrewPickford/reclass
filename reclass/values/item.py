@@ -12,6 +12,8 @@ from reclass.utils.dictpath import DictPath
 
 class Item(object):
 
+    # TODO: use enum.Enum
+    # TODO: consider DotMap
     COMPOSITE = 1
     DICTIONARY = 2
     INV_QUERY = 3
@@ -26,18 +28,22 @@ class Item(object):
     def allRefs(self):
         return True
 
+    @property
     def has_references(self):
         return False
 
+    @property
     def has_inv_query(self):
         return False
 
     def is_container(self):
         return False
 
+    @property
     def is_complex(self):
-        return (self.has_references() | self.has_inv_query())
+        return (self.has_references | self.has_inv_query)
 
+    @property
     def contents(self):
         msg = "Item class {0} does not implement contents()"
         raise NotImplementedError(msg.format(self.__class__.__name__))

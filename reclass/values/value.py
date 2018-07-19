@@ -70,17 +70,20 @@ class Value(object):
     def is_container(self):
         return self._item.is_container()
 
+    @property
     def allRefs(self):
-        return self._item.allRefs()
+        return self._item.allRefs
 
+    @property
     def has_references(self):
-        return self._item.has_references()
+        return self._item.has_references
 
+    @property
     def has_inv_query(self):
-        return self._item.has_inv_query()
+        return self._item.has_inv_query
 
     def needs_all_envs(self):
-        if self._item.has_inv_query():
+        if self._item.has_inv_query:
             return self._item.needs_all_envs()
         else:
             return False
@@ -88,8 +91,9 @@ class Value(object):
     def ignore_failed_render(self):
         return self._item.ignore_failed_render()
 
+    @property
     def is_complex(self):
-        return self._item.is_complex()
+        return self._item.is_complex
 
     def get_references(self):
         return self._item.get_references()
@@ -98,7 +102,7 @@ class Value(object):
         return self._item.get_inv_references()
 
     def assembleRefs(self, context):
-        if self._item.has_references():
+        if self._item.has_references:
             self._item.assembleRefs(context)
 
     def render(self, context, inventory):
@@ -108,8 +112,9 @@ class Value(object):
             e.uri = self._uri
             raise
 
+    @property
     def contents(self):
-        return self._item.contents()
+        return self._item.contents
 
     def merge_over(self, value):
         self._item = self._item.merge_over(value._item)
