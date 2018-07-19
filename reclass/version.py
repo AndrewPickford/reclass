@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 RECLASS_NAME = 'reclass'
 DESCRIPTION = 'merge data by recursive descent down an ancestry hierarchy (forked extended version)'
-VERSION = '1.5.4'
+VERSION = '1.5.5'
 AUTHOR = 'martin f. krafft / Andrew Pickford / salt-formulas community'
 AUTHOR_EMAIL = 'salt-formulas@freelists.org'
 MAINTAINER = 'salt-formulas community'
