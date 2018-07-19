@@ -3,36 +3,16 @@
 #
 # This file is part of reclass
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
-from .item import Item
-from reclass.settings import Settings
+from reclass.values import item
 
-class ListItem(Item):
 
-    def __init__(self, item, settings):
-        self.type = Item.LIST
-        self._list = item
-        self._settings = settings
+class ListItem(item.ContainerItem):
 
-    @property
-    def contents(self):
-        return self._list
+    type = item.ItemTypes.LIST
 
-    def is_container(self):
-        return True
-
-    def render(self, context, inventory):
-        return self._list
-
-    def merge_over(self, item):
-        if item.type == Item.LIST:
-            item._list.extend(self._list)
-            return item
-        raise RuntimeError('Trying to merge %s over %s' % (repr(self), repr(item)))
-
-    def __repr__(self):
-        return 'ListItem(%r)' % (self._list)
+    def merge_over(self, other):
+        if other.type == item.ItemTypes.LIST:
+            other.contents.extend(self.contents)
+            return other
+        raise RuntimeError('Failed to merge %s over %s'  % (self, other))

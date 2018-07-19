@@ -22,18 +22,16 @@ class Entity(object):
     for merging. The name and uri of an Entity will be updated to the name and
     uri of the Entity that is being merged.
     '''
-    def __init__(self, settings, classes=None, applications=None, parameters=None,
-                 exports=None, uri=None, name=None, environment=None):
-        self._uri = uri or ''
-        self._name = name or ''
-        if classes is None: classes = Classes()
-        self._set_classes(classes)
-        if applications is None: applications = Applications()
-        self._set_applications(applications)
-        if parameters is None: parameters = Parameters(None, settings, uri)
-        if exports is None: exports = Exports(None, settings, uri)
-        self._set_parameters(parameters)
-        self._set_exports(exports)
+    def __init__(self, settings, classes=None, applications=None,
+                 parameters=None, exports=None, uri=None, name=None,
+                 environment=None):
+        self._uri = '' if uri is None else uri
+        self._name = '' if name is None else name
+        self._classes = self._set_field(classes, Classes)
+        self._applications = self._set_field(applications, Applications)
+        pars = [None, settings, uri]
+        self._parameters = self._set_field(parameters, Parameters, pars)
+        self._exports = self._set_field(exports, Exports, pars)
         self._environment = environment
 
     name = property(lambda s: s._name)
@@ -52,29 +50,15 @@ class Entity(object):
     def environment(self, value):
         self._environment = value
 
-    def _set_classes(self, classes):
-        if not isinstance(classes, Classes):
-            raise TypeError('Entity.classes cannot be set to '\
-                            'instance of type %s' % type(classes))
-        self._classes = classes
-
-    def _set_applications(self, applications):
-        if not isinstance(applications, Applications):
-            raise TypeError('Entity.applications cannot be set to '\
-                            'instance of type %s' % type(applications))
-        self._applications = applications
-
-    def _set_parameters(self, parameters):
-        if not isinstance(parameters, Parameters):
-            raise TypeError('Entity.parameters cannot be set to '\
-                            'instance of type %s' % type(parameters))
-        self._parameters = parameters
-
-    def _set_exports(self, exports):
-        if not isinstance(exports, Exports):
-            raise TypeError('Entity.exports cannot be set to '\
-                            'instance of type %s' % type(exports))
-        self._exports = exports
+    def _set_field(self, received_value, expected_type, parameters=None):
+        if parameters is None:
+            parameters = []
+        if received_value is None:
+            return expected_type(*parameters)
+        if not isinstance(received_value, expected_type):
+            raise TypeError('Entity.%s cannot be set to instance of type %s' %
+                            (type(expected_type), type(received_value)))
+        return received_value
 
     def merge(self, other):
         self._classes.merge_unique(other._classes)

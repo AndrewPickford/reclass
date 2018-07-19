@@ -9,29 +9,23 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from reclass.settings import Settings
-from .item import Item
+from reclass.values import item
 
-class ScaItem(Item):
+
+class ScaItem(item.Item):
+
+    type = item.ItemTypes.SCALAR
 
     def __init__(self, value, settings):
-        self.type = Item.SCALAR
-        self._value = value
-        self._settings = settings
+        super(ScaItem, self).__init__(value, settings)
 
-    @property
-    def contents(self):
-        return self._value
-
-    def merge_over(self, item):
-        if item.type == Item.SCALAR or item.type == Item.COMPOSITE:
+    def merge_over(self, other):
+        if other.type in [item.ItemTypes.SCALAR, item.ItemTypes.COMPOSITE]:
             return self
-        raise RuntimeError('Trying to merge %s over %s' % (repr(self), repr(item)))
+        raise RuntimeError('Failed to merge %s over %s' % (self, other))
 
     def render(self, context, inventory):
-        return self._value
-
-    def __repr__(self):
-        return 'ScaItem({0!r})'.format(self._value)
+        return self.contents
 
     def __str__(self):
-        return str(self._value)
+        return str(self.contents)

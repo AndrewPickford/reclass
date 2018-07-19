@@ -96,7 +96,6 @@ class TestCompItem(unittest.TestCase):
 
         self.assertEquals(result, composite)
 
-
     def test_merge_over_merge_composite(self):
         val1 = Value(None, SETTINGS, '')
         val2 = Value(None, SETTINGS, '')
@@ -107,63 +106,12 @@ class TestCompItem(unittest.TestCase):
 
         self.assertEquals(result, composite2)
 
-    @unittest.skip("self._value bug")
-    def test_merge_over_merge_list_scalar_allowed(self):
-        # This nice bunch of lines below breaks merge because fuck you that's
-        # why. Seriously so, merger_over simply is not working for Composites
-        sets = Settings()
-        sets.allow_scalar_override = True
-        val1 = Value(None, SETTINGS, '')
-        listitem = ListItem([1], SETTINGS)
-        composite = CompItem([val1], sets)
-
-        result = composite.merge_over(listitem)
-
-        self.assertEquals(result, composite2)
-
-    @unittest.skip("self._value bug")
-    def test_merge_over_merge_list_override_allowed(self):
-        sets = Settings()
-        sets.allow_none_override = True
-        val1 = Value(None, SETTINGS, '')
-        listitem = ListItem([1], SETTINGS)
-        composite = CompItem([val1], sets)
-
-        result = composite.merge_over(listitem)
-
-        self.assertEquals(result, composite2)
-
     def test_merge_over_merge_list_not_allowed(self):
         val1 = Value(None, SETTINGS, '')
         listitem = ListItem([1], SETTINGS)
         composite = CompItem([val1], SETTINGS)
 
         self.assertRaises(RuntimeError, composite.merge_over, listitem)
-
-
-    @unittest.skip("self._value bug")
-    def test_merge_dict_scalar_allowed(self):
-        sets = Settings()
-        sets.allow_scalar_override = True
-        val1 = Value(None, SETTINGS, '')
-        dictitem = DictItem({'foo': 'bar'}, SETTINGS)
-        composite = CompItem([val1], sets)
-
-        result = composite.merge_over(dictitem)
-
-        self.assertEquals(result, composite)
-
-    @unittest.skip("self._value bug")
-    def test_merge_dict_override_allowed(self):
-        sets = Settings()
-        sets.allow_none_override = True
-        val1 = Value(None, SETTINGS, '')
-        dictitem = DictItem([1], SETTINGS)
-        composite = CompItem([val1], sets)
-
-        result = composite.merge_over(dictitem)
-
-        self.assertEquals(result, composite)
 
     def test_merge_dict_dict_not_allowed(self):
         val1 = Value(None, SETTINGS, '')

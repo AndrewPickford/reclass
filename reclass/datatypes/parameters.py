@@ -12,11 +12,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-#try:
-#    from types import StringTypes
-#except ImportError:
-#    StringTypes = (str, )
-
 import copy
 import sys
 import types
@@ -32,6 +27,7 @@ from reclass.values.valuelist import ValueList
 from reclass.errors import InfiniteRecursionError, ResolveError
 from reclass.errors import ResolveErrorList, InterpolationError, ParseError
 from reclass.errors import BadReferencesError
+
 
 class Parameters(object):
     '''
@@ -62,10 +58,9 @@ class Parameters(object):
         self._uri = uri
         self._base = ParameterDict(uri=self._uri)
         self._unrendered = None
-        self._escapes_handled = {}
         self._inv_queries = []
-        self._resolve_errors = ResolveErrorList()
-        self._needs_all_envs = False
+        self.resolve_errors = ResolveErrorList()
+        self.needs_all_envs = False
         self._parse_strings = parse_strings
         if mapping is not None:
             # initialise by merging
@@ -91,13 +86,6 @@ class Parameters(object):
 
     def get_inv_queries(self):
         return self._inv_queries
-
-    @property
-    def needs_all_envs(self):
-        return self._needs_all_envs
-
-    def resolve_errors(self):
-        return self._resolve_errors
 
     def as_dict(self):
         return self._base.copy()
@@ -258,8 +246,8 @@ class Parameters(object):
                 container[key] = value
                 if value.has_inv_query:
                     self._inv_queries.append((p, value))
-                    if value.needs_all_envs():
-                        self._needs_all_envs = True
+                    if value.needs_all_envs:
+                        self.needs_all_envs = True
                 return
             else:
                 value = value.merge()
@@ -276,8 +264,8 @@ class Parameters(object):
                 container[key] = value
                 if value.has_inv_query:
                     self._inv_queries.append((p, value))
-                    if value.needs_all_envs():
-                        self._needs_all_envs = True
+                    if value.needs_all_envs:
+                        self.needs_all_envs = True
             else:
                 container[key] = value.render(None, None)
         else:
@@ -303,8 +291,8 @@ class Parameters(object):
             # processing them, so we cannot just iterate the dict
             path, v = next(iteritems(self._unrendered))
             self._interpolate_inner(path, inventory)
-        if self._resolve_errors.have_errors():
-            raise self._resolve_errors
+        if self.resolve_errors.have_errors():
+            raise self.resolve_errors
 
     def initialise_interpolation(self):
         self._unrendered = None
@@ -314,8 +302,8 @@ class Parameters(object):
         if self._unrendered is None:
             self._unrendered = {}
             self._inv_queries = []
-            self._needs_all_envs = False
-            self._resolve_errors = ResolveErrorList()
+            self.needs_all_envs = False
+            self.resolve_errors = ResolveErrorList()
             self._base = self._render_simple_dict(self._base,
                  DictPath(self._settings.delimiter))
 
@@ -339,7 +327,7 @@ class Parameters(object):
         except ResolveError as e:
             e.context = path
             if self._settings.group_errors:
-                self._resolve_errors.add(e)
+                self.resolve_errors.add(e)
                 new = None
             else:
                 raise

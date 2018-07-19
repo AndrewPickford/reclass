@@ -23,7 +23,7 @@ class Value(object):
     def __init__(self, value, settings, uri, parse_string=True):
         self._settings = settings
         self._uri = uri
-        self._overwrite = False
+        self.overwrite = False
         self._constant = False
         if isinstance(value, string_types):
             if parse_string:
@@ -42,12 +42,8 @@ class Value(object):
             self._item = ScaItem(value, self._settings)
 
     @property
-    def overwrite(self):
-        return self._overwrite
-
-    @overwrite.setter
-    def overwrite(self, overwrite):
-        self._overwrite = overwrite
+    def uri(self):
+        return self._uri
 
     @property
     def constant(self):
@@ -56,10 +52,6 @@ class Value(object):
     @constant.setter
     def constant(self, constant):
         self._constant = constant
-
-    @property
-    def uri(self):
-        return self._uri
 
     def item_type(self):
         return self._item.type
@@ -82,14 +74,15 @@ class Value(object):
     def has_inv_query(self):
         return self._item.has_inv_query
 
+    @property
     def needs_all_envs(self):
         if self._item.has_inv_query:
-            return self._item.needs_all_envs()
+            return self._item.needs_all_envs
         else:
             return False
 
     def ignore_failed_render(self):
-        return self._item.ignore_failed_render()
+        return self._item.ignore_failed_render
 
     @property
     def is_complex(self):

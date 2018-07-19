@@ -33,9 +33,9 @@ class Applications(Classes):
         self._negations = []
         super(Applications, self).__init__(iterable)
 
-    def _get_negation_prefix(self):
+    @property
+    def negation_prefix(self):
         return self._negation_prefix
-    negation_prefix = property(_get_negation_prefix)
 
     def append_if_new(self, item):
         self._assert_is_string(item)

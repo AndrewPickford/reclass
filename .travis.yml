@@ -25,8 +25,9 @@ env:
     - PACKAGENAME="reclass"
 
 install: &pyinst
-- pip install pyparsing
-- pip install PyYAML
+- pip install -r requirements.txt
+#- pip install pyparsing
+#- pip install PyYAML
 # To test example models with kitchen:
 - |
   test -e Gemfile || cat <<EOF > Gemfile

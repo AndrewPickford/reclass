@@ -81,11 +81,12 @@ class DictPath(object):
         return self._delim.join(str(i) for i in self._parts)
 
     def __eq__(self, other):
+        if not (isinstance(other, six.string_types) or
+                isinstance(other, self.__class__)):
+            return False
         if isinstance(other, six.string_types):
             other = DictPath(self._delim, other)
-
-        return self._parts == other._parts \
-                and self._delim == other._delim
+        return self._parts == other._parts and self._delim == other._delim
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -152,18 +153,17 @@ class DictPath(object):
 
     def exists_in(self, container):
         item = container
-        for i in self._parts:
+        for part in self._parts:
             if isinstance(item, (dict, list)):
-                if i in item:
+                if part in item:
                     if isinstance(item, dict):
-                        item = item[i]
+                        item = item[part]
                     elif isinstance(container, list):
-                        item = item[int(i)]
+                        item = item[int(part)]
                 else:
                     return False
             else:
                 if item == self._parts[-1]:
                     return True
-                else:
-                    return False
+                return False
         return True

@@ -8,22 +8,20 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from enum import Enum
+
 from reclass.utils.dictpath import DictPath
+
+ItemTypes = Enum('ItemTypes',
+                 ['COMPOSITE', 'DICTIONARY', 'INV_QUERY', 'LIST',
+                  'REFERENCE', 'SCALAR'])
+
 
 class Item(object):
 
-    # TODO: use enum.Enum
-    # TODO: consider DotMap
-    COMPOSITE = 1
-    DICTIONARY = 2
-    INV_QUERY = 3
-    LIST = 4
-    REFERENCE = 5
-    SCALAR = 6
-
-    TYPE_STR = { COMPOSITE: 'composite', DICTIONARY: 'dictionary',
-                 INV_QUERY: 'invventory query', LIST: 'list',
-                 REFERENCE: 'reference', SCALAR: 'scalar' }
+    def __init__(self, item, settings):
+        self._settings = settings
+        self.contents = item
 
     def allRefs(self):
         return True
@@ -43,11 +41,6 @@ class Item(object):
     def is_complex(self):
         return (self.has_references | self.has_inv_query)
 
-    @property
-    def contents(self):
-        msg = "Item class {0} does not implement contents()"
-        raise NotImplementedError(msg.format(self.__class__.__name__))
-
     def merge_over(self, item):
         msg = "Item class {0} does not implement merge_over()"
         raise NotImplementedError(msg.format(self.__class__.__name__))
@@ -57,4 +50,41 @@ class Item(object):
         raise NotImplementedError(msg.format(self.__class__.__name__))
 
     def type_str(self):
-        return self.TYPE_STR[self.type]
+        return self.type.name.lower()
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.contents)
+
+
+class ItemWithReferences(Item):
+
+    def __init__(self, items, settings):
+        super(ItemWithReferences, self).__init__(items, settings)
+        self.assembleRefs()
+
+    @property
+    def has_references(self):
+        return len(self._refs) > 0
+
+    def get_references(self):
+        return self._refs
+
+    # NOTE: possibility of confusion. Looks like 'assemble' should be either
+    # 'gather' or 'extract'.
+    def assembleRefs(self, context={}):
+        self._refs = []
+        self.allRefs = True
+        for item in self.contents:
+            if item.has_references:
+                item.assembleRefs(context)
+                self._refs.extend(item.get_references())
+                if item.allRefs is False:
+                    self.allRefs = False
+
+class ContainerItem(Item):
+
+    def is_container(self):
+        return True
+
+    def render(self, context, inventory):
+        return self.contents

@@ -9,139 +9,72 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-import functools
+import itertools as it
+import operator
 import pyparsing as pp
 
 from six import iteritems
 from six import string_types
 
-from .item import Item
+from reclass.values import item
+from reclass.values import parser_funcs
 from reclass.settings import Settings
 from reclass.utils.dictpath import DictPath
 from reclass.errors import ExpressionError, ParseError, ResolveError
 
-_OBJ = 'OBJ'
-_TEST = 'TEST'
-_LIST_TEST = 'LIST_TEST'
-_LOGICAL = 'LOGICAL'
-_OPTION = 'OPTION'
 
-_VALUE = 'VALUE'
-_IF = 'IF'
-_AND = 'AND'
-_OR = 'OR'
+# TODO: generalize expression handling.
+class BaseTestExpression(object):
 
-_EQUAL = '=='
-_NOT_EQUAL = '!='
-
-_IGNORE_ERRORS = '+IgnoreErrors'
-_ALL_ENVS = '+AllEnvs'
+    known_operators = {}
+    def __init__(self, delimiter):
+        self._delimiter = delimiter
+        self.refs = []
+        self.inv_refs = []
 
 
-def _get_parser():
-    def tag_with(tag, transform=lambda x:x):
-        def inner(tag, string, location, tokens):
-            token = transform(tokens[0])
-            tokens[0] = (tag, token)
-        return functools.partial(inner, tag)
+class EqualityTest(BaseTestExpression):
 
-    _object = tag_with(_OBJ)
-    _option = tag_with(_OPTION)
-    _expr_list_test = tag_with(_LIST_TEST)
-    _test = tag_with(_TEST)
-    _logical = tag_with(_LOGICAL)
-    _if = tag_with(_IF)
-    _expr_var = tag_with(_VALUE)
-    _expr_test = tag_with(_TEST)
-    _integer = tag_with(_OBJ, int)
-    _number = tag_with(_OBJ, float)
-
-    end = pp.StringEnd()
-    ignore_errors = pp.CaselessLiteral(_IGNORE_ERRORS)
-    all_envs = pp.CaselessLiteral(_ALL_ENVS)
-    option = (ignore_errors | all_envs).setParseAction(_option)
-    options = pp.Group(pp.ZeroOrMore(option))
-    operator_test = (pp.Literal(_EQUAL) |
-                     pp.Literal(_NOT_EQUAL)).setParseAction(_test)
-    operator_logical = (pp.CaselessLiteral(_AND) |
-                        pp.CaselessLiteral(_OR)).setParseAction(_logical)
-    begin_if = pp.CaselessLiteral(_IF).setParseAction(_if)
-    obj = pp.Word(pp.printables).setParseAction(_object)
-    sign = pp.Optional(pp.Literal('-'))
-    number = pp.Word(pp.nums)
-    dpoint = pp.Literal('.')
-    integer = pp.Combine(sign + number + pp.WordEnd()).setParseAction(_integer)
-    real = pp.Combine(sign +
-                      ((number + dpoint + number) |
-                       (dpoint + number) |
-                       (number + dpoint))
-                     ).setParseAction(_number)
-    item = integer | real | obj
-
-    single_test = item + operator_test + item
-    additional_test = operator_logical + single_test
-    expr_var = pp.Group(obj + end).setParseAction(_expr_var)
-    expr_test = pp.Group(obj + begin_if + single_test +
-                         pp.ZeroOrMore(additional_test) +
-                         end).setParseAction(_expr_test)
-    expr_list_test = pp.Group(begin_if + single_test +
-                              pp.ZeroOrMore(additional_test) +
-                              end).setParseAction(_expr_list_test)
-    expr = expr_test | expr_var | expr_list_test
-    line = options + expr + end
-    return line
-
-
-class Element(object):
+    known_operators = { parser_funcs.EQUAL: operator.eq,
+                        parser_funcs.NOT_EQUAL: operator.ne}
 
     def __init__(self, expression, delimiter):
-        self._delimiter = delimiter
+        # expression is a list of at least three tuples, of which first element
+        # is a string tag, second is subelement value; other tuples apparently
+        # are not used.
+        # expression[0][1] effectively contains export path and apparently must
+        # be treated as such, also left hand operand in comparison
+        # expression[1][1] appa holds commparison operator == or !=
+        # expression[2][1] is the righhand operand
+        super(EqualityTest, self).__init__(delimiter)
         # TODO: this double sommersault must be cleaned
         _ = self._get_vars(expression[2][1], *self._get_vars(expression[0][1]))
         self._export_path, self._parameter_path, self._parameter_value = _
-
         try:
             self._export_path.drop_first()
         except AttributeError:
             raise ExpressionError('No export')
-
-        self._inv_refs = [ self._export_path ]
-        self._test = expression[1][1]
-
+        try:
+            self._compare = self.known_operators[expression[1][1]]
+        except KeyError as e:
+            msg = 'Unknown test {0}'.format(expression[1][1])
+            raise ExpressionError(msg, tbFlag=False)
+        self.inv_refs = [self._export_path]
         if self._parameter_path is not None:
             self._parameter_path.drop_first()
-            self._refs = [ str(self._parameter_path) ]
-        else:
-            self._refs = []
-
-    def refs(self):
-        return self._refs
-
-    def inv_refs(self):
-        return self._inv_refs
+            self.refs = [str(self._parameter_path)]
 
     def value(self, context, items):
         if self._parameter_path is not None:
-            self._parameter_value = self._resolve(self._parameter_path, context)
-
-        if self._parameter_value is None or self._test is None:
-            raise ExpressionError('Failed to render %s' % str(self), tbFlag=False)
-
+            self._parameter_value = self._resolve(self._parameter_path,
+                                                  context)
+        if self._parameter_value is None:
+            raise ExpressionError('Failed to render %s' % str(self),
+                                  tbFlag=False)
         if self._export_path.exists_in(items):
-            result = False
             export_value = self._resolve(self._export_path, items)
-            if self._test == _EQUAL:
-                if export_value == self._parameter_value:
-                    result = True
-            elif self._test == _NOT_EQUAL:
-                if export_value != self._parameter_value:
-                    result = True
-            else:
-                raise ExpressionError('Unknown test {0}'.format(self._test),
-                                      tbFlag=False)
-            return result
-        else:
-            return False
+            return self._compare(export_value, self._parameter_value)
+        return False
 
     def _resolve(self, path, dictionary):
         try:
@@ -167,109 +100,82 @@ class Element(object):
         return export, parameter, value
 
 
-class Question(object):
+class LogicTest(BaseTestExpression):
 
-    def __init__(self, expression, delimiter):
-        self._elements = []
-        self._operators = []
-        self._delimiter = delimiter
-        self._refs = []
-        self._inv_refs = []
-        i = 0
-        while i < len(expression):
-            e = Element(expression[i:], self._delimiter)
-            self._elements.append(e)
-            self._refs.extend(e.refs())
-            self._inv_refs.extend(e.inv_refs())
-            i += 3
-            if i < len(expression):
-                self._operators.append(expression[i][1])
-                i += 1
+    known_operators = { parser_funcs.AND: operator.and_,
+                        parser_funcs.OR: operator.or_}
 
-    def refs(self):
-        return self._refs
-
-    def inv_refs(self):
-        return self._inv_refs
+    def __init__(self, expr, delimiter):
+        super(LogicTest, self).__init__(delimiter)
+        subtests = list(it.compress(expr, it.cycle([1, 1, 1, 0])))
+        self._els = [EqualityTest(subtests[j:j+3], self._delimiter)
+                     for j in range(0, len(subtests), 3)]
+        self.refs = [x.refs for x in self._els]
+        self.inv_refs = [x.inv_refs for x in self._els]
+        try:
+            self._ops = [self.known_operators[x[1]] for x in expr[3::4]]
+        except KeyError as e:
+            msg = 'Unknown operator {0} {1}'.format(e.messsage, self._els)
+            raise ExpressionError(msg, tbFlag=False)
 
     def value(self, context, items):
-        if len(self._elements) == 0:
+        if len(self._els) == 0:  # NOTE: possible logic error
             return True
-        elif len(self._elements) == 1:
-            return self._elements[0].value(context, items)
-        else:
-            result = self._elements[0].value(context, items)
-            for i in range(0, len(self._elements)-1):
-                next_result = self._elements[i+1].value(context, items)
-                if self._operators[i] == _AND:
-                    result = result and next_result
-                elif self._operators[i] == _OR:
-                    result = result or next_result
-                else:
-                    emsg = 'Unknown operator {0} {1}'.format(
-                        self._operators[i], self.elements)
-                    raise ExpressionError(emsg, tbFlag=False)
-            return result
+        result = self._els[0].value(context, items)
+        for op, next_el in zip(self._ops, self._els[1:]):
+            result = op(result, next_el.value(context, items))
+        return result
 
 
-class InvItem(Item):
+class InvItem(item.Item):
 
+    type = item.ItemTypes.INV_QUERY
 
-    _parser = _get_parser()
-
-    def __init__(self, item, settings):
-        self.type = Item.INV_QUERY
-        self._settings = settings
-        self._needs_all_envs = False
-        self._ignore_failed_render = self._settings.inventory_ignore_failed_render
-        self._expr_text = item.render(None, None)
-        self._parse_expression(self._expr_text)
+    def __init__(self, newitem, settings):
+        super(InvItem, self).__init__(newitem.render(None, None), settings)
+        self.needs_all_envs = False
+        self.ignore_failed_render = (
+                self._settings.inventory_ignore_failed_render)
+        self._parse_expression(self.contents)
 
     def _parse_expression(self, expr):
+        parser = parser_funcs.get_expression_parser()
         try:
-            tokens = self._parser.parseString(expr).asList()
+            tokens = parser.parseString(expr).asList()
         except pp.ParseException as e:
             raise ParseError(e.msg, e.line, e.col, e.lineno)
 
-        if len(tokens) == 1:
-            self._expr_type = tokens[0][0]
-            self._expr = list(tokens[0][1])
-        elif len(tokens) == 2:
-            for opt in tokens[0]:
-                if opt[1] == _IGNORE_ERRORS:
-                    self._ignore_failed_render = True
-                elif opt[1] == _ALL_ENVS:
-                    self._needs_all_envs = True
-            self._expr_type = tokens[1][0]
-            self._expr = list(tokens[1][1])
-        else:
-            raise ExpressionError('Failed to parse %s' % str(tokens), tbFlag=False)
+        if len(tokens) == 2:  # options are set
+            passed_opts = [x[1] for x in tokens.pop(0)]
+            self.ignore_failed_render = parser_funcs.IGNORE_ERRORS in passed_opts
+            self.needs_all_envs = parser_funcs.ALL_ENVS in passed_opts
+        elif len(tokens) > 2:
+            raise ExpressionError('Failed to parse %s' % str(tokens),
+                                  tbFlag=False)
+        self._expr_type = tokens[0][0]
+        self._expr = list(tokens[0][1])
 
-        if self._expr_type == _VALUE:
-            self._value_path = DictPath(self._settings.delimiter, self._expr[0][1]).drop_first()
-            self._question = Question([], self._settings.delimiter)
-            self._refs = []
-            self._inv_refs = [ self._value_path ]
-        elif self._expr_type == _TEST:
-            self._value_path = DictPath(self._settings.delimiter, self._expr[0][1]).drop_first()
-            self._question = Question(self._expr[2:], self._settings.delimiter)
-            self._refs = self._question.refs()
-            self._inv_refs = self._question.inv_refs()
-            self._inv_refs.append(self._value_path)
-        elif self._expr_type == _LIST_TEST:
+        if self._expr_type == parser_funcs.VALUE:
+            self._value_path = DictPath(self._settings.delimiter,
+                                        self._expr[0][1]).drop_first()
+            self._question = LogicTest([], self._settings.delimiter)
+            self.refs = []
+            self.inv_refs = [self._value_path]
+        elif self._expr_type == parser_funcs.TEST:
+            self._value_path = DictPath(self._settings.delimiter,
+                                        self._expr[0][1]).drop_first()
+            self._question = LogicTest(self._expr[2:], self._settings.delimiter)
+            self.refs = self._question.refs
+            self.inv_refs = self._question.inv_refs
+            self.inv_refs.append(self._value_path)
+        elif self._expr_type == parser_funcs.LIST_TEST:
             self._value_path = None
-            self._question = Question(self._expr[1:], self._settings.delimiter)
-            self._refs = self._question.refs()
-            self._inv_refs = self._question.inv_refs()
+            self._question = LogicTest(self._expr[1:], self._settings.delimiter)
+            self.refs = self._question.refs
+            self.inv_refs = self._question.inv_refs
         else:
-            raise ExpressionError('Unknown expression type: %s' % self._expr_type, tbFlag=False)
-
-    def assembleRefs(self, context):
-        return
-
-    @property
-    def contents(self):
-        return self._expr_text
+            msg = 'Unknown expression type: %s'
+            raise ExpressionError(msg % self._expr_type, tbFlag=False)
 
     @property
     def has_inv_query(self):
@@ -277,19 +183,13 @@ class InvItem(Item):
 
     @property
     def has_references(self):
-        return len(self._question.refs()) > 0
+        return len(self._question.refs) > 0
 
     def get_references(self):
-        return self._question.refs()
+        return self._question.refs
 
     def get_inv_references(self):
-        return self._inv_refs
-
-    def needs_all_envs(self):
-        return self._needs_all_envs
-
-    def ignore_failed_render(self):
-        return self._ignore_failed_render
+        return self.inv_refs
 
     def _resolve(self, path, dictionary):
         try:
@@ -301,17 +201,21 @@ class InvItem(Item):
         results = {}
         for (node, items) in iteritems(inventory):
             if self._value_path.exists_in(items):
-                results[node] = copy.deepcopy(self._resolve(self._value_path, items))
+                results[node] = copy.deepcopy(self._resolve(self._value_path,
+                                              items))
         return results
 
     def _test_expression(self, context, inventory):
         if self._value_path is None:
-            ExpressionError('Failed to render %s' % str(self), tbFlag=False)
+            msg = 'Failed to render %s'
+            raise ExpressionError(msg % str(self), tbFlag=False)
 
         results = {}
-        for (node, items) in iteritems(inventory):
-            if self._question.value(context, items) and self._value_path.exists_in(items):
-                results[node] = copy.deepcopy(self._resolve(self._value_path, items))
+        for node, items in iteritems(inventory):
+            if (self._question.value(context, items) and
+                    self._value_path.exists_in(items)):
+                results[node] = copy.deepcopy(
+                    self._resolve(self._value_path, items))
         return results
 
     def _list_test_expression(self, context, inventory):
@@ -322,11 +226,11 @@ class InvItem(Item):
         return results
 
     def render(self, context, inventory):
-        if self._expr_type == _VALUE:
+        if self._expr_type == parser_funcs.VALUE:
             return self._value_expression(inventory)
-        elif self._expr_type == _TEST:
+        elif self._expr_type == parser_funcs.TEST:
             return self._test_expression(context, inventory)
-        elif self._expr_type == _LIST_TEST:
+        elif self._expr_type == parser_funcs.LIST_TEST:
             return self._list_test_expression(context, inventory)
         raise ExpressionError('Failed to render %s' % str(self), tbFlag=False)
 
@@ -334,4 +238,5 @@ class InvItem(Item):
         return ' '.join(str(j) for i,j in self._expr)
 
     def __repr__(self):
+        # had to leave it here for now as the behaviour differs from basic
         return 'InvItem(%r)' % self._expr

@@ -8,13 +8,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from __future__ import print_function
-
 import copy
 import sys
 
 from reclass.errors import ChangedConstantError, ResolveError, TypeMergeError
-
 
 
 class ValueList(object):
@@ -22,17 +19,17 @@ class ValueList(object):
     def __init__(self, value, settings):
         self._settings = settings
         self._refs = []
-        self._allRefs = True
-        self._values = [ value ]
+        self.allRefs = True
+        self._values = [value]
         self._inv_refs = []
         self._has_inv_query = False
-        self._ignore_failed_render = False
+        self.ignore_failed_render = False
         self._is_complex = False
         self._update()
 
     @property
     def uri(self):
-        return '; '.join([ str(x.uri) for x in self._values ])
+        return '; '.join([str(x.uri) for x in self._values])
 
     def append(self, value):
         self._values.append(value)
@@ -69,34 +66,27 @@ class ValueList(object):
     def get_references(self):
         return self._refs
 
-    @property
-    def allRefs(self):
-        return self._allRefs
-
-    def ignore_failed_render(self):
-        return self._ignore_failed_render
-
     def _check_for_inv_query(self):
         self._has_inv_query = False
-        self._ignore_failed_render = True
+        self.ignore_failed_render = True
         for value in self._values:
             if value.has_inv_query:
                 self._inv_refs.extend(value.get_inv_references)
                 self._has_inv_query = True
                 if vale.ignore_failed_render() is False:
-                    self._ignore_failed_render = False
+                    self.ignore_failed_render = False
         if self._has_inv_query is False:
-            self._ignore_failed_render = False
+            self.ignore_failed_render = False
 
     def assembleRefs(self, context={}):
         self._refs = []
-        self._allRefs = True
+        self.allRefs = True
         for value in self._values:
             value.assembleRefs(context)
             if value.has_references:
                 self._refs.extend(value.get_references())
             if value.allRefs is False:
-                self._allRefs = False
+                self.allRefs = False
 
     def merge(self):
         output = None
@@ -118,12 +108,17 @@ class ValueList(object):
             try:
                 new = value.render(context, inventory)
             except ResolveError as e:
-                # only ignore failed renders if ignore_overwritten_missing_references is set and we are dealing with a scalar value
-                # and it's not the last item in the values list
-                if self._settings.ignore_overwritten_missing_references and not isinstance(output, (dict, list)) and n != (len(self._values)-1):
+                # only ignore failed renders if
+                # ignore_overwritten_missing_references is set and we are
+                # dealing with a scalar value and it's not the last item in the
+                # values list
+                if (self._settings.ignore_overwritten_missing_references
+                        and not isinstance(output, (dict, list))
+                        and n != (len(self._values)-1)):
                     new = None
                     last_error = e
-                    print("[WARNING] Reference '%s' undefined" % str(value), file=sys.stderr)
+                    print("[WARNING] Reference '%s' undefined" % str(value),
+                          file=sys.stderr)
                 else:
                     raise e
 
@@ -190,6 +185,3 @@ class ValueList(object):
             raise last_error
 
         return output
-
-    def __repr__(self):
-        return 'ValueList(%r)' % self._values

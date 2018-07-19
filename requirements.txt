@@ -1,4 +1,4 @@
 pyparsing
 pyyaml
-pygit2
 six
+enum34
