@@ -69,7 +69,7 @@ def cli():
         storage = get_storage(options.storage_type,
                               options.nodes_uri,
                               options.classes_uri,
-                              options.add_subdir_to_node)
+                              options.compose_node_name)
         class_mappings = defaults.get('class_mappings')
         defaults.update(vars(options))
         settings = Settings(defaults)

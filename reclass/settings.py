@@ -32,7 +32,7 @@ class Settings(object):
         self.reference_sentinels = options.get('reference_sentinels', REFERENCE_SENTINELS)
         self.ignore_class_notfound = options.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND)
         self.strict_constant_parameters = options.get('strict_constant_parameters', OPT_STRICT_CONSTANT_PARAMETERS)
-        self.add_subdir_to_node = options.get('add_subdir_to_node', OPT_ADD_SUBDIR_TO_NODE)
+        self.compose_node_name = options.get('compose_node_name', OPT_COMPOSE_NODE_NAME)
 
         self.ignore_class_notfound_regexp = options.get('ignore_class_notfound_regexp', OPT_IGNORE_CLASS_NOTFOUND_REGEXP)
         if isinstance(self.ignore_class_notfound_regexp, string_types):
@@ -67,7 +67,7 @@ class Settings(object):
                and self.ignore_class_notfound_regexp == other.ignore_class_notfound_regexp \
                and self.ignore_class_notfound_warning == other.ignore_class_notfound_warning \
                and self.strict_constant_parameters == other.strict_constant_parameters \
-               and self.add_subdir_to_node == other.add_subdir_to_node
+               and self.compose_node_name == other.compose_node_name
 
     def __copy__(self):
         cls = self.__class__

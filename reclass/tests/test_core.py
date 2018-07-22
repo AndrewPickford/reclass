@@ -28,7 +28,7 @@ class TestCore(unittest.TestCase):
         path_mangler = get_path_mangler('yaml_fs')
         nodes_uri, classes_uri = path_mangler(inventory_uri, 'nodes', 'classes')
         settings = Settings(opts)
-        storage = get_storage('yaml_fs', nodes_uri, classes_uri, settings.add_subdir_to_node)
+        storage = get_storage('yaml_fs', nodes_uri, classes_uri, settings.compose_node_name)
         return Core(storage, None, settings)
 
     def test_type_conversion(self):

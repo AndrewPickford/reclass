@@ -55,12 +55,12 @@ def path_mangler(inventory_base_uri, nodes_uri, classes_uri):
 
 class ExternalNodeStorage(NodeStorageBase):
 
-    def __init__(self, nodes_uri, classes_uri, add_subdir_to_node):
+    def __init__(self, nodes_uri, classes_uri, compose_node_name):
         super(ExternalNodeStorage, self).__init__(STORAGE_NAME)
 
         if nodes_uri is not None:
             self._nodes_uri = nodes_uri
-            if add_subdir_to_node:
+            if compose_node_name:
                 self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.classes)
             else:
                 self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.nodes)

@@ -509,7 +509,7 @@ The above exports and parameter definitions could be put into a separate class a
 access to the database and included by the database server as well.
 
 
-Add subfolders to node name
+Compose node name
 ---------------------------
 
 Nodes can be defined in subdirectories. However, node names (filename) must be unique across all subdirectories.
@@ -525,7 +525,7 @@ With setting:
 
 .. code-block:: yaml
 
-  add_subdir_to_node: True       # default False
+  compose_node_name: True       # default False
 
 This adds the subfolder to the node name and the structure above can then be used. It generates the following reclass objects:
 
