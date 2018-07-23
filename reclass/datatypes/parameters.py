@@ -170,6 +170,8 @@ class Parameters(object):
         """
 
         for (key, value) in iteritems(new):
+            # check key for "control" preffixes (~,=,...)
+            key = str(key)
             if key[0] in self._settings.dict_key_prefixes:
                 newkey = key[1:]
                 if not isinstance(value, Value):
