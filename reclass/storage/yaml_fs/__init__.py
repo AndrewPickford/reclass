@@ -61,7 +61,7 @@ class ExternalNodeStorage(NodeStorageBase):
         if nodes_uri is not None:
             self._nodes_uri = nodes_uri
             if compose_node_name:
-                self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.classes)
+                self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.composed_nodes)
             else:
                 self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.nodes)
 

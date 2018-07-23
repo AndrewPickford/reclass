@@ -14,6 +14,17 @@ class NameMangler:
         return relpath, name
 
     @staticmethod
+    def composed_nodes(relpath, name):
+        if relpath == '.' or relpath == '':
+            # './' is converted to None
+            return None, name
+        parts = relpath.split(os.path.sep)
+        if parts[0].startswith("_"):
+            return relpath, name
+        parts.append(name)
+        return relpath, '.'.join(parts)
+
+    @staticmethod
     def classes(relpath, name):
         if relpath == '.' or relpath == '':
             # './' is converted to None
