@@ -5,6 +5,9 @@ ChangeLog
 ========= ========== ========================================================
 Version   Date       Changes
 ========= ========== ========================================================
+1.5.6     2018-07-30 * Fix, usage of integers as pillar keys
+                     * Refactoring python codebase by @a-ovchinkonv
+                     * New feature, "compose node name" from node subdirectory structure (by @gburiola)
 1.5.5     2018-07    * Add immutable (constant) parameters
                      * Fixes
 1.5.4     2018-05    * Add support for salt 2018.3
