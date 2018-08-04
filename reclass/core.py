@@ -136,7 +136,7 @@ class Core(object):
                     e.uri = entity.uri
                     raise
 
-                descent = self._recurse_entity(class_entity, context=merge_base, seen=seen,
+                descent = self._recurse_entity(class_entity, context=context, seen=seen,
                                                nodename=nodename, environment=environment)
                 # on every iteration, we merge the result of the recursive
                 # descent into what we have so far…
