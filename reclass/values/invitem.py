@@ -110,8 +110,9 @@ class LogicTest(BaseTestExpression):
         subtests = list(it.compress(expr, it.cycle([1, 1, 1, 0])))
         self._els = [EqualityTest(subtests[j:j+3], self._delimiter)
                      for j in range(0, len(subtests), 3)]
-        self.refs = [x.refs for x in self._els]
-        self.inv_refs = [x.inv_refs for x in self._els]
+        for x in self._els:
+            self.refs.extend(x.refs)
+            self.inv_refs.extend(x.inv_refs)
         try:
             self._ops = [self.known_operators[x[1]] for x in expr[3::4]]
         except KeyError as e:
