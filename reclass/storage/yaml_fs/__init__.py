@@ -15,8 +15,7 @@ import os, sys
 import fnmatch
 import yaml
 from reclass.output.yaml_outputter import ExplicitDumper
-from reclass.storage import NodeStorageBase
-from reclass.storage.common import NameMangler
+from reclass.storage import ExternalNodeStorageBase
 from reclass.storage.yamldata import YamlData
 from .directory import Directory
 from reclass.datatypes import Entity
@@ -53,22 +52,18 @@ def path_mangler(inventory_base_uri, nodes_uri, classes_uri):
     return n, c
 
 
-class ExternalNodeStorage(NodeStorageBase):
+class ExternalNodeStorage(ExternalNodeStorageBase):
 
     def __init__(self, nodes_uri, classes_uri, compose_node_name):
-        super(ExternalNodeStorage, self).__init__(STORAGE_NAME)
+        super(ExternalNodeStorage, self).__init__(STORAGE_NAME, compose_node_name)
 
         if nodes_uri is not None:
             self._nodes_uri = nodes_uri
-            if compose_node_name:
-                self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.composed_nodes)
-            else:
-                self._nodes = self._enumerate_inventory(nodes_uri, NameMangler.nodes)
-
+            self._nodes = self._enumerate_inventory(nodes_uri, self.node_name_mangler)
 
         if classes_uri is not None:
             self._classes_uri = classes_uri
-            self._classes = self._enumerate_inventory(classes_uri, NameMangler.classes)
+            self._classes = self._enumerate_inventory(classes_uri, self.class_name_mangler)
 
     nodes_uri = property(lambda self: self._nodes_uri)
     classes_uri = property(lambda self: self._classes_uri)

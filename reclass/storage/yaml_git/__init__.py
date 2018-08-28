@@ -29,8 +29,7 @@ with warnings.catch_warnings():
 from six import iteritems
 
 import reclass.errors
-from reclass.storage import NodeStorageBase
-from reclass.storage.common import NameMangler
+from reclass.storage import ExternalNodeStorageBase
 from reclass.storage.yamldata import YamlData
 
 FILE_EXTENSION = '.yml'
@@ -76,7 +75,7 @@ class GitURI(object):
 
 class GitRepo(object):
 
-    def __init__(self, uri):
+    def __init__(self, uri, node_name_mangler, class_name_mangler):
         if pygit2 is None:
             raise errors.MissingModuleError('pygit2')
         self.transport, _, self.url = uri.repo.partition('://')
@@ -88,6 +87,8 @@ class GitRepo(object):
         else:
             self.cache_dir = '{0}/{1}'.format(uri.cache_dir, self.name)
 
+        self._node_name_mangler = node_name_mangler
+        self._class_name_mangler = class_name_mangler
         self._init_repo(uri)
         self._fetch()
         self.branches = self.repo.listall_branches()
@@ -199,7 +200,8 @@ class GitRepo(object):
                 if fnmatch.fnmatch(file.name, '*{0}'.format(FILE_EXTENSION)):
                     name = os.path.splitext(file.name)[0]
                     relpath = os.path.dirname(file.path)
-                    relpath, name = NameMangler.classes(relpath, name)
+                    if callable(self._class_name_mangler):
+                        relpath, name = self._class_name_mangler(relpath, name)
                     if name in ret:
                         raise reclass.errors.DuplicateNodeNameError(self.name + ' - ' + bname, name, ret[name], path)
                     else:
@@ -212,16 +214,19 @@ class GitRepo(object):
         for (name, file) in iteritems(self.files[branch]):
             if subdir is None or name.startswith(subdir):
                 node_name = os.path.splitext(file.name)[0]
+                relpath = os.path.dirname(file.path)
+                if callable(self._node_name_mangler):
+                    relpath, node_name = self._node_name_mangler(relpath, node_name)
                 if node_name in ret:
                     raise reclass.errors.DuplicateNodeNameError(self.name, name, files[name], path)
                 else:
                     ret[node_name] = file
         return ret
 
-class ExternalNodeStorage(NodeStorageBase):
+class ExternalNodeStorage(ExternalNodeStorageBase):
 
-    def __init__(self, nodes_uri, classes_uri):
-        super(ExternalNodeStorage, self).__init__(STORAGE_NAME)
+    def __init__(self, nodes_uri, classes_uri, compose_node_name):
+        super(ExternalNodeStorage, self).__init__(STORAGE_NAME, compose_node_name)
         self._repos = dict()
 
         if nodes_uri is not None:
@@ -276,7 +281,7 @@ class ExternalNodeStorage(NodeStorageBase):
 
     def _load_repo(self, uri):
         if uri.repo not in self._repos:
-            self._repos[uri.repo] = GitRepo(uri)
+            self._repos[uri.repo] = GitRepo(uri, self.node_name_mangler, self.class_name_mangler)
 
     def _env_to_uri(self, environment):
         ret = None

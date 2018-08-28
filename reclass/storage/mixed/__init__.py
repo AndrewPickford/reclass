@@ -14,7 +14,7 @@ from six import iteritems
 
 import reclass.errors
 from reclass import get_storage
-from reclass.storage import NodeStorageBase
+from reclass.storage import ExternalNodeStorageBase
 
 def path_mangler(inventory_base_uri, nodes_uri, classes_uri):
     if nodes_uri == classes_uri:
@@ -23,17 +23,17 @@ def path_mangler(inventory_base_uri, nodes_uri, classes_uri):
 
 STORAGE_NAME = 'mixed'
 
-class ExternalNodeStorage(NodeStorageBase):
+class ExternalNodeStorage(ExternalNodeStorageBase):
 
     MixedUri = collections.namedtuple('MixedURI', 'storage_type options')
 
-    def __init__(self, nodes_uri, classes_uri):
-        super(ExternalNodeStorage, self).__init__(STORAGE_NAME)
+    def __init__(self, nodes_uri, classes_uri, compose_node_name):
+        super(ExternalNodeStorage, self).__init__(STORAGE_NAME, compose_node_name)
 
         self._nodes_uri = self._uri(nodes_uri)
-        self._nodes_storage = get_storage(self._nodes_uri.storage_type, self._nodes_uri.options, None)
+        self._nodes_storage = get_storage(self._nodes_uri.storage_type, self._nodes_uri.options, None, compose_node_name)
         self._classes_default_uri = self._uri(classes_uri)
-        self._classes_default_storage = get_storage(self._classes_default_uri.storage_type, None, self._classes_default_uri.options)
+        self._classes_default_storage = get_storage(self._classes_default_uri.storage_type, None, self._classes_default_uri.options, compose_node_name)
 
         self._classes_storage = dict()
         if 'env_overrides' in classes_uri:
@@ -42,7 +42,7 @@ class ExternalNodeStorage(NodeStorageBase):
                         uri = copy.deepcopy(classes_uri)
                         uri.update(options)
                         uri = self._uri(uri)
-                        self._classes_storage[env] = get_storage(uri.storage_type, None, uri.options)
+                        self._classes_storage[env] = get_storage(uri.storage_type, None, uri.options, compose_node_name)
 
     def _uri(self, uri):
         ret = copy.deepcopy(uri)

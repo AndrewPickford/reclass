@@ -11,6 +11,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from reclass.storage.common import NameMangler
 
 class NodeStorageBase(object):
 
@@ -34,3 +35,14 @@ class NodeStorageBase(object):
     def path_mangler(self):
         msg = "Storage class '{0}' does not implement path_mangler."
         raise NotImplementedError(msg.format(self.name))
+
+
+class ExternalNodeStorageBase(NodeStorageBase):
+
+    def __init__(self, name, compose_node_name):
+        super(ExternalNodeStorageBase, self).__init__(name)
+        self.class_name_mangler = NameMangler.classes
+        if compose_node_name:
+            self.node_name_mangler = NameMangler.composed_nodes
+        else:
+            self.node_name_mangler = NameMangler.nodes
