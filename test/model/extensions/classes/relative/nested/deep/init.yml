@@ -1,0 +1,9 @@
+
+classes:
+  - .common
+
+parameters:
+  nested:
+    deep:
+      init: True
+      common: True

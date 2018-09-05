@@ -1,6 +1,7 @@
 classes:
 - missing.class
 - second
+- .defaults
 
 parameters:
   _param:

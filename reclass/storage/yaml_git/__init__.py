@@ -273,7 +273,15 @@ class ExternalNodeStorage(ExternalNodeStorageBase):
             raise reclass.errors.NotFoundError("File " + name + " missing from " + uri.repo + " branch " + uri.branch)
         file = self._repos[uri.repo].files[uri.branch][name]
         blob = self._repos[uri.repo].get(file.id)
-        entity = YamlData.from_string(blob.data, 'git_fs://{0} {1} {2}'.format(uri.repo, uri.branch, file.path)).get_entity(name, settings)
+
+        if file.name.endswith('init{}'.format(FILE_EXTENSION)):
+            parent_class=name
+        else:
+            # for regular class yml file, strip its name
+            parent_class='.'.join(name.split('.')[:-1])
+
+        entity = YamlData.from_string(blob.data, 'git_fs://{0} {1} {2}'.format(uri.repo, uri.branch,
+            file.path)).get_entity(name, settings, parent_class)
         return entity
 
     def enumerate_nodes(self):

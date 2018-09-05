@@ -113,6 +113,7 @@ class Core(object):
             context = Entity(self._settings, name='empty (@{0})'.format(nodename))
 
         for klass in entity.classes.as_list():
+            # class name contain reference
             if klass.count('$') > 0:
                 try:
                     klass = str(self._parser.parse(klass, self._settings).render(merge_base.parameters.as_dict(), {}))
@@ -121,6 +122,10 @@ class Core(object):
                         klass = str(self._parser.parse(klass, self._settings).render(context.parameters.as_dict(), {}))
                     except ResolveError as e:
                         raise ClassNameResolveError(klass, nodename, entity.uri)
+
+            # for convenience, first level classes_uri/class.yml can have un-interpolated "."
+            if klass.startswith('.'):
+                klass = klass[1:]
 
             if klass not in seen:
                 try:

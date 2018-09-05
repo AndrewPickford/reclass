@@ -53,13 +53,16 @@ class YamlData(object):
     def get_data(self):
         return self._data
 
-    def get_entity(self, name, settings):
+    def get_entity(self, name, settings, parent_class=None):
         #if name is None:
         #    name = self._uri
 
         classes = self._data.get('classes')
         if classes is None:
             classes = []
+        if parent_class:
+            classes = \
+                [parent_class + c for c in classes if c.startswith('.')]
         classes = datatypes.Classes(classes)
 
         applications = self._data.get('applications')

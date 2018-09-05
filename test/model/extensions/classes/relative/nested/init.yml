@@ -1,0 +1,10 @@
+
+classes:
+  - .common
+  - .deep
+  - .dive.session
+
+parameters:
+  nested:
+    deep:
+      init: True
