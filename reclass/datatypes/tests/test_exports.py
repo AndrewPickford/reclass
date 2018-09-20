@@ -120,5 +120,14 @@ class TestInvQuery(unittest.TestCase):
         p.interpolate(e)
         self.assertIn(p.as_dict(), [ r1, r2 ])
 
+    def test_merging_inv_queries(self):
+        e = {'node1': {'a': 1}, 'node2': {'a': 1}, 'node3': {'a': 2}}
+        p1 = Parameters({'exp': '$[ if exports:a == 1 ]'}, SETTINGS, '')
+        p2 = Parameters({'exp': '$[ if exports:a == 2 ]'}, SETTINGS, '')
+        r = { 'exp': [ 'node1', 'node2', 'node3' ] }
+        p1.merge(p2)
+        p1.interpolate(e)
+        self.assertEqual(p1.as_dict(), r)
+
 if __name__ == '__main__':
     unittest.main()

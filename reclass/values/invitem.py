@@ -189,6 +189,9 @@ class InvItem(item.Item):
     def get_references(self):
         return self._question.refs
 
+    def assembleRefs(self, context):
+        return
+
     def get_inv_references(self):
         return self.inv_refs
 

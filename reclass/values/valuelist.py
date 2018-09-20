@@ -71,9 +71,9 @@ class ValueList(object):
         self.ignore_failed_render = True
         for value in self._values:
             if value.has_inv_query:
-                self._inv_refs.extend(value.get_inv_references)
+                self._inv_refs.extend(value.get_inv_references())
                 self._has_inv_query = True
-                if vale.ignore_failed_render() is False:
+                if value.ignore_failed_render() is False:
                     self.ignore_failed_render = False
         if self._has_inv_query is False:
             self.ignore_failed_render = False
@@ -87,6 +87,13 @@ class ValueList(object):
                 self._refs.extend(value.get_references())
             if value.allRefs is False:
                 self.allRefs = False
+
+    @property
+    def needs_all_envs(self):
+        for value in self._values:
+            if value.needs_all_envs:
+                return True
+        return False
 
     def merge(self):
         output = None
