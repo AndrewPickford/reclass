@@ -1,0 +1,6 @@
+parameters:
+  d: 4
+  alpha:
+  - ${d}
+  beta:
+    d: ${d}

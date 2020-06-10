@@ -135,6 +135,7 @@ class InvItem(item.Item):
     def __init__(self, newitem, settings):
         super(InvItem, self).__init__(newitem.render(None, None), settings)
         self.needs_all_envs = False
+        self.has_inv_query = True
         self.ignore_failed_render = (
                 self._settings.inventory_ignore_failed_render)
         self._parse_expression(self.contents)
@@ -177,10 +178,6 @@ class InvItem(item.Item):
         else:
             msg = 'Unknown expression type: %s'
             raise ExpressionError(msg % self._expr_type, tbFlag=False)
-
-    @property
-    def has_inv_query(self):
-        return True
 
     @property
     def has_references(self):

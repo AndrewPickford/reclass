@@ -35,7 +35,6 @@ class Entity(object):
         self._environment = environment
 
     name = property(lambda s: s._name)
-    short_name = property(lambda s: s._short_name)
     uri = property(lambda s: s._uri)
     classes = property(lambda s: s._classes)
     applications = property(lambda s: s._applications)
@@ -61,10 +60,10 @@ class Entity(object):
         return received_value
 
     def merge(self, other):
-        self._classes.merge_unique(other._classes)
-        self._applications.merge_unique(other._applications)
-        self._parameters.merge(other._parameters)
-        self._exports.merge(other._exports)
+        self._classes.merge_unique(other.classes)
+        self._applications.merge_unique(other.applications)
+        self._parameters.merge(other.parameters)
+        self._exports.merge(other.exports)
         self._name = other.name
         self._uri = other.uri
         self._parameters._uri = other.uri
@@ -91,12 +90,12 @@ class Entity(object):
 
     def __eq__(self, other):
         return isinstance(other, type(self)) \
-                and self._applications == other._applications \
-                and self._classes == other._classes \
-                and self._parameters == other._parameters \
-                and self._exports == other._exports \
-                and self._name == other._name \
-                and self._uri == other._uri
+                and self._applications == other.applications \
+                and self._classes == other.classes \
+                and self._parameters == other.parameters \
+                and self._exports == other.exports \
+                and self._name == other.name \
+                and self._uri == other.uri
 
     def __ne__(self, other):
         return not self.__eq__(other)

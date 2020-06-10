@@ -16,11 +16,13 @@ class RefItem(item.ItemWithReferences):
     def assembleRefs(self, context={}):
         super(RefItem, self).assembleRefs(context)
         try:
-            strings = [str(i.render(context, None)) for i in self.contents]
-            value = "".join(strings)
-            self._refs.append(value)
+            self._refs.append(self._flatten_contents(context))
         except ResolveError as e:
             self.allRefs = False
+
+    def _flatten_contents(self, context, inventory=None):
+        result = [str(i.render(context, inventory)) for i in self.contents]
+        return "".join(result)
 
     def _resolve(self, ref, context):
         path = DictPath(self._settings.delimiter, ref)
@@ -30,11 +32,10 @@ class RefItem(item.ItemWithReferences):
             raise ResolveError(ref)
 
     def render(self, context, inventory):
-        if len(self.contents) == 1:
-            return self._resolve(self.contents[0].render(context, inventory),
-                                 context)
-        strings = [str(i.render(context, inventory)) for i in self.contents]
-        return self._resolve("".join(strings), context)
+        #strings = [str(i.render(context, inventory)) for i in self.contents]
+        #return self._resolve("".join(strings), context)
+        return self._resolve(self._flatten_contents(context, inventory),
+                             context)
 
     def __str__(self):
         strings = [str(i) for i in self.contents]

@@ -9,7 +9,8 @@ from __future__ import unicode_literals
 
 import collections
 import distutils.version
-import fnmatch
+import errno
+import fcntl
 import os
 import time
 
@@ -32,7 +33,7 @@ import reclass.errors
 from reclass.storage import ExternalNodeStorageBase
 from reclass.storage.yamldata import YamlData
 
-FILE_EXTENSION = '.yml'
+FILE_EXTENSION = ('.yml', '.yaml')
 STORAGE_NAME = 'yaml_git'
 
 def path_mangler(inventory_base_uri, nodes_uri, classes_uri):
@@ -51,6 +52,7 @@ class GitURI(object):
         self.branch = None
         self.root = None
         self.cache_dir = None
+        self.lock_dir = None
         self.pubkey = None
         self.privkey = None
         self.password = None
@@ -60,6 +62,7 @@ class GitURI(object):
         if 'repo' in dictionary: self.repo = dictionary['repo']
         if 'branch' in dictionary: self.branch = dictionary['branch']
         if 'cache_dir' in dictionary: self.cache_dir = dictionary['cache_dir']
+        if 'lock_dir' in dictionary: self.lock_dir = dictionary['lock_dir']
         if 'pubkey' in dictionary: self.pubkey = dictionary['pubkey']
         if 'privkey' in dictionary: self.privkey = dictionary['privkey']
         if 'password' in dictionary: self.password = dictionary['password']
@@ -73,8 +76,31 @@ class GitURI(object):
         return '<{0}: {1} {2} {3}>'.format(self.__class__.__name__, self.repo, self.branch, self.root)
 
 
-class GitRepo(object):
+class LockFile():
+    def __init__(self, file):
+        self._file = file
 
+    def __enter__(self):
+        self._fd = open(self._file, 'w+')
+        start = time.time()
+        while True:
+            if (time.time() - start) > 120:
+                raise IOError('Timeout waiting to lock file: {0}'.format(self._file))
+            try:
+                fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except IOError as e:
+                # raise on unrelated IOErrors
+                if e.errno != errno.EAGAIN:
+                    raise
+                else:
+                    time.sleep(0.1)
+
+    def __exit__(self, type, value, traceback):
+        self._fd.close()
+
+
+class GitRepo(object):
     def __init__(self, uri, node_name_mangler, class_name_mangler):
         if pygit2 is None:
             raise errors.MissingModuleError('pygit2')
@@ -86,11 +112,18 @@ class GitRepo(object):
             self.cache_dir = '{0}/{1}/{2}'.format(os.path.expanduser("~"), '.reclass/cache/git', self.name)
         else:
             self.cache_dir = '{0}/{1}'.format(uri.cache_dir, self.name)
-
+        if uri.lock_dir is None:
+            self.lock_file = '{0}/{1}/{2}'.format(os.path.expanduser("~"), '.reclass/cache/lock', self.name)
+        else:
+            self.lock_file = '{0}/{1}'.format(uri.lock_dir, self.name)
+        lock_dir = os.path.dirname(self.lock_file)
+        if not os.path.exists(lock_dir):
+            os.makedirs(lock_dir)
         self._node_name_mangler = node_name_mangler
         self._class_name_mangler = class_name_mangler
-        self._init_repo(uri)
-        self._fetch()
+        with LockFile(self.lock_file):
+            self._init_repo(uri)
+            self._fetch()
         self.branches = self.repo.listall_branches()
         self.files = self.files_in_repo()
 
@@ -100,10 +133,7 @@ class GitRepo(object):
         else:
             os.makedirs(self.cache_dir)
             self.repo = pygit2.init_repository(self.cache_dir, bare=True)
-
-        if not self.repo.remotes:
             self.repo.create_remote('origin', self.url)
-
         if 'ssh' in self.transport:
             if '@' in self.url:
                 user, _, _ = self.url.partition('@')
@@ -130,22 +160,7 @@ class GitRepo(object):
             fetch_kwargs['callbacks'] = self.remotecallbacks
         if self.credentials is not None:
             origin.credentials = self.credentials
-
-        #FIXME: the git connection sometimes fails to initialise,
-        #       work around this by retrying a few times before
-        #       failing and raising an exception
-        c = 0
-        while True:
-            try:
-                fetch_results = origin.fetch(**fetch_kwargs)
-                break
-            except Exception as e:
-                if c >= 2:
-                    raise e
-                else:
-                    c += 1
-                    time.sleep(0.2)
-
+        fetch_results = origin.fetch(**fetch_kwargs)
         remote_branches = self.repo.listall_branches(pygit2.GIT_BRANCH_REMOTE)
         local_branches = self.repo.listall_branches()
         for remote_branch_name in remote_branches:
@@ -197,7 +212,7 @@ class GitRepo(object):
             branch = {}
             files = self.files_in_branch(bname)
             for file in files:
-                if fnmatch.fnmatch(file.name, '*{0}'.format(FILE_EXTENSION)):
+                if file.name.endswith(FILE_EXTENSION):
                     name = os.path.splitext(file.name)[0]
                     relpath = os.path.dirname(file.path)
                     if callable(self._class_name_mangler):
@@ -223,8 +238,8 @@ class GitRepo(object):
                     ret[node_name] = file
         return ret
 
-class ExternalNodeStorage(ExternalNodeStorageBase):
 
+class ExternalNodeStorage(ExternalNodeStorageBase):
     def __init__(self, nodes_uri, classes_uri, compose_node_name):
         super(ExternalNodeStorage, self).__init__(STORAGE_NAME, compose_node_name)
         self._repos = dict()
@@ -273,15 +288,7 @@ class ExternalNodeStorage(ExternalNodeStorageBase):
             raise reclass.errors.NotFoundError("File " + name + " missing from " + uri.repo + " branch " + uri.branch)
         file = self._repos[uri.repo].files[uri.branch][name]
         blob = self._repos[uri.repo].get(file.id)
-
-        if file.name.endswith('init{}'.format(FILE_EXTENSION)):
-            parent_class=name
-        else:
-            # for regular class yml file, strip its name
-            parent_class='.'.join(name.split('.')[:-1])
-
-        entity = YamlData.from_string(blob.data, 'git_fs://{0} {1} {2}'.format(uri.repo, uri.branch,
-            file.path)).get_entity(name, settings, parent_class)
+        entity = YamlData.from_string(blob.data, 'git_fs://{0} {1} {2}'.format(uri.repo, uri.branch, file.path)).get_entity(name, settings)
         return entity
 
     def enumerate_nodes(self):

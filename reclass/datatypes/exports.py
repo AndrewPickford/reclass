@@ -23,9 +23,6 @@ class Exports(Parameters):
     def __init__(self, mapping, settings, uri):
         super(Exports, self).__init__(mapping, settings, uri)
 
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self._base)
-
     def delete_key(self, key):
         self._base.pop(key, None)
         self._unrendered.pop(key, None)

@@ -22,9 +22,9 @@ class ValueList(object):
         self.allRefs = True
         self._values = [value]
         self._inv_refs = []
-        self._has_inv_query = False
+        self.has_inv_query = False
         self.ignore_failed_render = False
-        self._is_complex = False
+        self.is_complex = False
         self._update()
 
     @property
@@ -42,40 +42,32 @@ class ValueList(object):
     def _update(self):
         self.assembleRefs()
         self._check_for_inv_query()
-        self._is_complex = False
+        self.is_complex = False
         item_type = self._values[0].item_type()
         for v in self._values:
             if v.is_complex or v.constant or v.overwrite or v.item_type() != item_type:
-                self._is_complex = True
+                self.is_complex = True
 
     @property
     def has_references(self):
         return len(self._refs) > 0
 
-    @property
-    def has_inv_query(self):
-        return self._has_inv_query
-
     def get_inv_references(self):
         return self._inv_refs
-
-    @property
-    def is_complex(self):
-        return self._is_complex
 
     def get_references(self):
         return self._refs
 
     def _check_for_inv_query(self):
-        self._has_inv_query = False
+        self.has_inv_query = False
         self.ignore_failed_render = True
         for value in self._values:
             if value.has_inv_query:
                 self._inv_refs.extend(value.get_inv_references())
-                self._has_inv_query = True
+                self.has_inv_query = True
                 if value.ignore_failed_render() is False:
                     self.ignore_failed_render = False
-        if self._has_inv_query is False:
+        if self.has_inv_query is False:
             self.ignore_failed_render = False
 
     def assembleRefs(self, context={}):

@@ -28,18 +28,14 @@ class Applications(Classes):
 
     def __init__(self, iterable=None,
                  negation_prefix=DEFAULT_NEGATION_PREFIX):
-        self._negation_prefix = negation_prefix
+        self.negation_prefix = negation_prefix
         self._offset = len(negation_prefix)
         self._negations = []
         super(Applications, self).__init__(iterable)
 
-    @property
-    def negation_prefix(self):
-        return self._negation_prefix
-
     def append_if_new(self, item):
         self._assert_is_string(item)
-        if item.startswith(self._negation_prefix):
+        if item.startswith(self.negation_prefix):
             item = item[self._offset:]
             self._negations.append(item)
             try:
@@ -64,6 +60,6 @@ class Applications(Classes):
 
     def __repr__(self):
         contents = self._items + \
-                ['%s%s' % (self._negation_prefix, i) for i in self._negations]
+                ['%s%s' % (self.negation_prefix, i) for i in self._negations]
         return "%s(%r, %r)" % (self.__class__.__name__, contents,
-                               str(self._negation_prefix))
+                               str(self.negation_prefix))

@@ -5,6 +5,10 @@ ChangeLog
 ========= ========== ========================================================
 Version   Date       Changes
 ========= ========== ========================================================
+1.6.0     2018-11-06 * Python code and parser refactoring by a-ovchinnikov
+                     * Improvements in yaml_git and mixed setup by Andrew Pickford
+                     * Relative paths in class names by Petr Michalec, Martin Polreich and Andrew Pickford
+                     * Bug Fixes for recently added features
 1.5.6     2018-07-30 * Fix, usage of integers as pillar keys
                      * Refactoring python codebase by @a-ovchinkonv
                      * New feature, "compose node name" from node subdirectory structure (by @gburiola)

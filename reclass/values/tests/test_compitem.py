@@ -71,6 +71,14 @@ class TestCompItem(unittest.TestCase):
         self.assertTrue(composite.has_references)
         self.assertEquals(composite.get_references(), expected_refs)
 
+    def test_string_representation(self):
+        composite = CompItem(Value(1, SETTINGS, ''), SETTINGS)
+        expected = '1'
+
+        result = str(composite)
+
+        self.assertEquals(result, expected)
+
     def test_render_single_item(self):
         val1 = Value('${foo}',  SETTINGS, '')
 
@@ -105,20 +113,6 @@ class TestCompItem(unittest.TestCase):
         result = composite2.merge_over(composite1)
 
         self.assertEquals(result, composite2)
-
-    def test_merge_over_merge_list_not_allowed(self):
-        val1 = Value(None, SETTINGS, '')
-        listitem = ListItem([1], SETTINGS)
-        composite = CompItem([val1], SETTINGS)
-
-        self.assertRaises(RuntimeError, composite.merge_over, listitem)
-
-    def test_merge_dict_dict_not_allowed(self):
-        val1 = Value(None, SETTINGS, '')
-        dictitem = DictItem({'foo': 'bar'}, SETTINGS)
-        composite = CompItem([val1], SETTINGS)
-
-        self.assertRaises(RuntimeError, composite.merge_over, dictitem)
 
     def test_merge_other_types_not_allowed(self):
         other = type('Other', (object,), {'type': 34})

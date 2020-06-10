@@ -1,0 +1,13 @@
+classes:
+- .beta
+- two.beta
+- ..four
+- ..two.gamma
+- ..init
+
+parameters:
+  test1: ${one_beta}
+  test2: ${two_beta}
+  test3: ${four_alpha}
+  test4: ${two_gamma}
+  test5: ${alpha_init}

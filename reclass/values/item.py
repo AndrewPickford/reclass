@@ -22,16 +22,13 @@ class Item(object):
     def __init__(self, item, settings):
         self._settings = settings
         self.contents = item
+        self.has_inv_query = False
 
     def allRefs(self):
         return True
 
     @property
     def has_references(self):
-        return False
-
-    @property
-    def has_inv_query(self):
         return False
 
     def is_container(self):
@@ -60,6 +57,10 @@ class ItemWithReferences(Item):
 
     def __init__(self, items, settings):
         super(ItemWithReferences, self).__init__(items, settings)
+        try:
+            iter(self.contents)
+        except TypeError:
+            self.contents = [self.contents]
         self.assembleRefs()
 
     @property
@@ -80,6 +81,7 @@ class ItemWithReferences(Item):
                 self._refs.extend(item.get_references())
                 if item.allRefs is False:
                     self.allRefs = False
+
 
 class ContainerItem(Item):
 

@@ -57,7 +57,7 @@ class Classes(object):
 
     def _assert_is_string(self, item):
         if not isinstance(item, six.string_types):
-            raise TypeError('%s instances can only contain strings, '\
+            raise TypeError('%s instances can only contain strings, '
                             'not %s' % (self.__class__.__name__, type(item)))
 
     def _assert_valid_characters(self, item):

@@ -5,69 +5,61 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import copy
-import reclass.values.parser_funcs
-from reclass.defaults import *
+import reclass.defaults as defaults
 
-from six import string_types
+from six import string_types, iteritems
+
 
 class Settings(object):
 
+    known_opts = {
+        'allow_scalar_over_dict': defaults.OPT_ALLOW_SCALAR_OVER_DICT,
+        'allow_scalar_over_list': defaults.OPT_ALLOW_SCALAR_OVER_LIST,
+        'allow_list_over_scalar': defaults.OPT_ALLOW_LIST_OVER_SCALAR,
+        'allow_dict_over_scalar': defaults.OPT_ALLOW_DICT_OVER_SCALAR,
+        'allow_none_override': defaults.OPT_ALLOW_NONE_OVERRIDE,
+        'automatic_parameters': defaults.AUTOMATIC_RECLASS_PARAMETERS,
+        'default_environment': defaults.DEFAULT_ENVIRONMENT,
+        'delimiter': defaults.PARAMETER_INTERPOLATION_DELIMITER,
+        'dict_key_override_prefix':
+            defaults.PARAMETER_DICT_KEY_OVERRIDE_PREFIX,
+        'dict_key_constant_prefix':
+            defaults.PARAMETER_DICT_KEY_CONSTANT_PREFIX,
+        'escape_character': defaults.ESCAPE_CHARACTER,
+        'export_sentinels': defaults.EXPORT_SENTINELS,
+        'inventory_ignore_failed_node':
+            defaults.OPT_INVENTORY_IGNORE_FAILED_NODE,
+        'inventory_ignore_failed_render':
+            defaults.OPT_INVENTORY_IGNORE_FAILED_RENDER,
+        'reference_sentinels': defaults.REFERENCE_SENTINELS,
+        'ignore_class_notfound': defaults.OPT_IGNORE_CLASS_NOTFOUND,
+        'strict_constant_parameters':
+            defaults.OPT_STRICT_CONSTANT_PARAMETERS,
+        'ignore_class_notfound_regexp':
+            defaults.OPT_IGNORE_CLASS_NOTFOUND_REGEXP,
+        'ignore_class_notfound_warning':
+            defaults.OPT_IGNORE_CLASS_NOTFOUND_WARNING,
+        'ignore_overwritten_missing_references':
+            defaults.OPT_IGNORE_OVERWRITTEN_MISSING_REFERENCES,
+        'group_errors': defaults.OPT_GROUP_ERRORS,
+        'compose_node_name': defaults.OPT_COMPOSE_NODE_NAME,
+    }
+
     def __init__(self, options={}):
-        self.allow_scalar_over_dict = options.get('allow_scalar_over_dict', OPT_ALLOW_SCALAR_OVER_DICT)
-        self.allow_scalar_over_list = options.get('allow_scalar_over_list', OPT_ALLOW_SCALAR_OVER_LIST)
-        self.allow_list_over_scalar = options.get('allow_list_over_scalar', OPT_ALLOW_LIST_OVER_SCALAR)
-        self.allow_dict_over_scalar = options.get('allow_dict_over_scalar', OPT_ALLOW_DICT_OVER_SCALAR)
-        self.allow_none_override = options.get('allow_none_override', OPT_ALLOW_NONE_OVERRIDE)
-        self.automatic_parameters = options.get('automatic_parameters', AUTOMATIC_RECLASS_PARAMETERS)
-        self.default_environment = options.get('default_environment', DEFAULT_ENVIRONMENT)
-        self.delimiter = options.get('delimiter', PARAMETER_INTERPOLATION_DELIMITER)
-        self.dict_key_override_prefix = options.get('dict_key_override_prefix', PARAMETER_DICT_KEY_OVERRIDE_PREFIX)
-        self.dict_key_constant_prefix = options.get('dict_key_constant_prefix', PARAMETER_DICT_KEY_CONSTANT_PREFIX)
-        self.dict_key_prefixes = [ str(self.dict_key_override_prefix), str(self.dict_key_constant_prefix) ]
-        self.escape_character = options.get('escape_character', ESCAPE_CHARACTER)
-        self.export_sentinels = options.get('export_sentinels', EXPORT_SENTINELS)
-        self.inventory_ignore_failed_node = options.get('inventory_ignore_failed_node', OPT_INVENTORY_IGNORE_FAILED_NODE)
-        self.inventory_ignore_failed_render = options.get('inventory_ignore_failed_render', OPT_INVENTORY_IGNORE_FAILED_RENDER)
-        self.reference_sentinels = options.get('reference_sentinels', REFERENCE_SENTINELS)
-        self.ignore_class_notfound = options.get('ignore_class_notfound', OPT_IGNORE_CLASS_NOTFOUND)
-        self.strict_constant_parameters = options.get('strict_constant_parameters', OPT_STRICT_CONSTANT_PARAMETERS)
-        self.compose_node_name = options.get('compose_node_name', OPT_COMPOSE_NODE_NAME)
+        for opt_name, opt_value in iteritems(self.known_opts):
+            setattr(self, opt_name, options.get(opt_name, opt_value))
 
-        self.ignore_class_notfound_regexp = options.get('ignore_class_notfound_regexp', OPT_IGNORE_CLASS_NOTFOUND_REGEXP)
+        self.dict_key_prefixes = [str(self.dict_key_override_prefix),
+                                  str(self.dict_key_constant_prefix)]
         if isinstance(self.ignore_class_notfound_regexp, string_types):
-            self.ignore_class_notfound_regexp = [ self.ignore_class_notfound_regexp ]
-
-        self.ignore_class_notfound_warning = options.get('ignore_class_notfound_warning', OPT_IGNORE_CLASS_NOTFOUND_WARNING)
-        self.ignore_overwritten_missing_references = options.get('ignore_overwritten_missing_references', OPT_IGNORE_OVERWRITTEN_MISSING_REFERENCES)
-
-        self.group_errors = options.get('group_errors', OPT_GROUP_ERRORS)
-
-        self.ref_parser = reclass.values.parser_funcs.get_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
-        self.simple_ref_parser = reclass.values.parser_funcs.get_simple_ref_parser(self.escape_character, self.reference_sentinels, self.export_sentinels)
+            self.ignore_class_notfound_regexp = [
+                    self.ignore_class_notfound_regexp]
 
     def __eq__(self, other):
-        return isinstance(other, type(self)) \
-               and self.allow_scalar_over_dict == other.allow_scalar_over_dict \
-               and self.allow_scalar_over_list == other.allow_scalar_over_list \
-               and self.allow_list_over_scalar == other.allow_list_over_scalar \
-               and self.allow_dict_over_scalar == other.allow_dict_over_scalar \
-               and self.allow_none_override == other.allow_none_override \
-               and self.automatic_parameters == other.automatic_parameters \
-               and self.default_environment == other.default_environment \
-               and self.delimiter == other.delimiter \
-               and self.dict_key_override_prefix == other.dict_key_override_prefix \
-               and self.dict_key_constant_prefix == other.dict_key_constant_prefix \
-               and self.escape_character == other.escape_character \
-               and self.export_sentinels == other.export_sentinels \
-               and self.inventory_ignore_failed_node == other.inventory_ignore_failed_node \
-               and self.inventory_ignore_failed_render == other.inventory_ignore_failed_render \
-               and self.reference_sentinels == other.reference_sentinels \
-               and self.ignore_class_notfound == other.ignore_class_notfound \
-               and self.ignore_class_notfound_regexp == other.ignore_class_notfound_regexp \
-               and self.ignore_class_notfound_warning == other.ignore_class_notfound_warning \
-               and self.strict_constant_parameters == other.strict_constant_parameters \
-               and self.compose_node_name == other.compose_node_name
+        if isinstance(other, type(self)):
+            return all(getattr(self, opt) == getattr(other, opt)
+                       for opt in self.known_opts)
+        return False
 
     def __copy__(self):
         cls = self.__class__

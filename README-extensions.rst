@@ -340,17 +340,19 @@ Load classes with relative names
 --------------------------------
 
 Load referenced class from a relative location to the current class.
-To load class from relative location start the class uri with "." char.
+To load class from relative location start the class uri with "." or ".." char.
 The only supported reference is to nested tree structure below the current class.
 
 You are allowed to use syntax for relative uri to required class on any place on your model (first class loaded, init.yml, regular class .yml).
 
 The feature is expected to improve flexibility while sharing classes between your models.
 
+Please mpte that you can't use '..' without any calss following. If you want simply up in the sctructure, type in '..init'.
+
 It's a new feature use it with care and mind that using "relative syntax" lower traceability of
 your pillar composition.
 
-Example usage of relative class name:
+Example usage of relative class name using '.' and '..':
 
 .. code-block:: yaml
 
@@ -365,6 +367,12 @@ Example usage of relative class name:
   #/etc/reclass/classes/component/init.yml
   classes:
     - .defaults
+
+.. code-block:: yaml
+
+  #/etc/reclass/classes/component/configuration/init.yml
+  classes:
+    - ..defaults
 
 
 Inventory Queries
@@ -569,3 +577,117 @@ This adds the subfolder to the node name and the structure above can then be use
       ...
 
 If the subfolder path starts with the underscore character ``_``, then the subfolder path is NOT added to the node name.
+
+
+Git storage type
+----------------
+
+Reclass node and class yaml files can be read from a remote git repository with the yaml_git storage type. Use nodes_uri and
+classes_uri to define the git repos to use for nodes and classes. These can be the same repo.
+
+For salt masters using ssh connections the private and public keys must be readable by the salt daemon, which requires the
+private key NOT be password protected. For stand alone reclass using ssh connections if the privkey and pubkey options
+are not defined then any in memory key (from ssh-add) will be used.
+
+Salt master reclass config example:
+
+.. code-block:: yaml
+
+  storage_type:yaml_git
+  nodes_uri:
+    # branch to use
+    branch: master
+
+    # cache directory (default: ~/.reclass/git/cache)
+    cache_dir: /var/cache/reclass/git
+
+    # lock directory (default: ~/.reclass/git/lock)
+    lock_dir: /var/cache/reclass/lock
+
+    # private key for ssh connections (no default, but will used keys stored
+    # by ssh-add in memory if privkey and pubkey are not set)
+    privkey: /root/salt_rsa
+    # public key for ssh connections
+    pubkey: /root/salt_rsa.pub
+
+    repo: git+ssh://gitlab@remote.server:salt/nodes.git
+
+  classes_uri:
+    # branch to use or __env__ to use the branch matching the node
+    # environment name
+    branch: __env__
+
+    # cache directory (default: ~/.reclass/git/cache)
+    cache_dir: /var/cache/reclass/git
+
+    # lock directory (default: ~/.reclass/git/lock)
+    lock_dir: /var/cache/reclass/lock
+
+    # private key for ssh connections (no default, but will used keys stored
+    # by ssh-add in memory if privkey and pubkey are not set)
+    privkey: /root/salt_rsa
+    # public key for ssh connections
+    pubkey: /root/salt_rsa.pub
+
+    # branch/env overrides for specific branches
+    env_overrides:
+    # prod env uses master branch
+    - prod:
+        branch: master
+    # use master branch for nodes with no environment defined
+    - none:
+        branch: master
+
+    repo: git+ssh://gitlab@remote.server:salt/site.git
+
+    # root directory of the class hierarcy in git repo
+    # defaults to root directory of git repo if not given
+    root: classes
+
+
+Mixed storage type
+------------------
+
+Use a mixture of storage types.
+
+Salt master reclass config example, which by default uses yaml_git storage but overrides the location for
+classes for the pre-prod environment to use a directory on the local disc:
+
+.. code-block:: yaml
+
+  storage_type: mixed
+  nodes_uri:
+    # storage type to use
+    storage_type: yaml_git
+
+    # yaml_git storage options
+    branch: master
+    cache_dir: /var/cache/reclass/git
+    lock_dir: /var/cache/reclass/lock
+    privkey: /root/salt_rsa
+    pubkey: /root/salt_rsa.pub
+    repo: git+ssh://gitlab@remote.server:salt/nodes.git
+
+  classes_uri:
+    # storage type to use
+    storage_type: yaml_git
+
+    # yaml_git storage options
+    branch: __env__
+    cache_dir: /var/cache/reclass/git
+    lock_dir: /var/cache/reclass/lock
+    privkey: /root/salt_rsa
+    pubkey: /root/salt_rsa.pub
+    repo: git+ssh://gitlab@remote.server:salt/site.git
+    root: classes
+
+    env_overrides:
+    - prod:
+        branch: master
+    - none:
+        branch: master
+    - pre-prod:
+        # override storage type for this environment
+        storage_type: yaml_fs
+        # options for yaml_fs storage type
+        uri: /srv/salt/env/pre-prod/classes

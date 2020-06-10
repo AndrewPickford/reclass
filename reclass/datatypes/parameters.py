@@ -105,24 +105,23 @@ class Parameters(object):
                 e.context = DictPath(self._settings.delimiter)
                 raise
 
+    def _get_wrapped(self, position, value):
+        try:
+            return self._wrap_value(value)
+        except InterpolationError as e:
+            e.context.add_ancestor(str(position))
+            raise
+
     def _wrap_list(self, source):
         l = ParameterList(uri=self._uri)
         for (k, v) in enumerate(source):
-            try:
-                l.append(self._wrap_value(v))
-            except InterpolationError as e:
-                e.context.add_ancestor(str(k))
-                raise
+            l.append(self._get_wrapped(k, v))
         return l
 
     def _wrap_dict(self, source):
         d = ParameterDict(uri=self._uri)
         for (k, v) in iteritems(source):
-            try:
-                d[k] = self._wrap_value(v)
-            except InterpolationError as e:
-                e.context.add_ancestor(str(k))
-                raise
+            d[k] = self._get_wrapped(k, v)
         return d
 
     def _update_value(self, cur, new):

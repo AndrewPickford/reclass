@@ -1,0 +1,6 @@
+parameters:
+  a: 1
+  alpha:
+  - ${a}
+  beta:
+    a: ${a}
